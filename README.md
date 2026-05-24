@@ -1,5 +1,8 @@
 # News Credibility Tracker
 
+[![Live](https://img.shields.io/badge/live-news--credibility.vercel.app-black?logo=vercel)](https://news-credibility.vercel.app)
+[![Ingest](https://github.com/chengfengguo727-cmd/news-credibility/actions/workflows/ingest.yml/badge.svg)](https://github.com/chengfengguo727-cmd/news-credibility/actions/workflows/ingest.yml)
+
 MVP for tracking how well financial news sources predict the market.
 See [`plans/reuters-bloomberg-prancy-widget.md`](../../Users/hfkuo/.claude/plans/reuters-bloomberg-prancy-widget.md) for the full design.
 

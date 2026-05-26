@@ -34,10 +34,19 @@ def ingest() -> None:
 
 
 @app.command()
-def extract() -> None:
-    """Run claim extraction on unprocessed articles. (Week 2)"""
-    typer.echo("extract: not implemented yet (Week 2)")
-    raise typer.Exit(code=2)
+def extract(limit: int = typer.Option(50, help="Max articles to process this run.")) -> None:
+    """Run Claude claim extraction on unprocessed articles."""
+    from extract.claim_extractor import extract_batch
+
+    stats = extract_batch(limit=limit)
+    total_claims = sum(s.claims_written for s in stats)
+    cache_reads = sum(s.cache_read_tokens for s in stats)
+    cache_writes = sum(s.cache_write_tokens for s in stats)
+    errors = sum(1 for s in stats if s.error)
+    typer.echo(
+        f"articles={len(stats)} claims={total_claims} "
+        f"cache_read_tok={cache_reads} cache_write_tok={cache_writes} errors={errors}"
+    )
 
 
 @app.command()

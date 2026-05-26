@@ -1,5 +1,9 @@
 name: Hourly ingest
 
+# Ingest runs in CI because it's a pure HTTP/SQL job — no LLM auth needed.
+# Extract (`python -m tasks.run extract`) requires the Claude Code CLI's
+# OAuth session, which only exists on the user's local machine; run it
+# manually or via Windows Task Scheduler from there.
 on:
   schedule:
     - cron: "0 * * * *"   # top of every hour, UTC

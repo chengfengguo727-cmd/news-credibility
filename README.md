@@ -16,13 +16,24 @@ Browser ── HTTPS ──► Vercel (Next.js)
                        ▲
                        │ DATABASE_URL (postgres superuser)
                        │
-                    GitHub Actions (hourly cron) ── python -m tasks.run ingest
+       ┌───────────────┴───────────────┐
+       │                               │
+GitHub Actions cron            Local machine
+(ingest, hourly, free)         (extract, on-demand)
+python -m tasks.run ingest     python -m tasks.run extract
+                               └─ shells out to `claude` CLI
+                                  (OAuth via Claude subscription —
+                                   no API key needed)
 ```
 
 - **No backend server.** Frontend reads Supabase directly via the anon
-  key; RLS policies only permit `SELECT`. Writes happen exclusively from
-  the Python pipeline.
-- **Pipeline runs on GitHub Actions** — free, no Docker, no Railway.
+  key; RLS policies only permit `SELECT`. Writes happen exclusively
+  from the Python pipeline.
+- **Ingest runs on GitHub Actions** — pure HTTP/SQL, no auth needed.
+- **Extract runs locally** — uses the `claude` CLI's OAuth session so
+  it charges against your Claude Pro/Max subscription instead of a
+  pay-as-you-go API key. Trade-off: needs a machine with `claude`
+  installed + logged in (no GitHub Actions, no Vercel cron).
 
 ```
 backend/   Python — ingest / extract / validate / score (CLI via Typer)
@@ -30,21 +41,25 @@ frontend/  Next.js 14 — public ranking site (talks to Supabase directly)
 .github/   Hourly ingest cron
 ```
 
-## Status (Week 1)
+## Status
 
-Done:
+**Week 1 — done:**
 - Idempotent Supabase schema with RLS + public-read policies
 - RSS ingest (`backend/ingest/rss.py`) for Reuters / CNBC / Yahoo Finance
 - Bayesian scoring helper + unit tests
-- Typer CLI (`python -m tasks.run ingest`)
-- GitHub Actions hourly cron
-- Next.js frontend reading from Supabase via supabase-js
+- Typer CLI (`python -m tasks.run ingest|extract`)
+- GitHub Actions hourly ingest cron
+- Next.js frontend on Vercel reading Supabase via supabase-js
 
-TODO:
-- Week 2: Claude Haiku claim extractor
+**Week 2 — done:**
+- Claim extractor (`backend/extract/claim_extractor.py`) that shells out
+  to the `claude` CLI with `--json-schema` for structured output
+- Auth via Claude Code OAuth (no `ANTHROPIC_API_KEY` required)
+
+**TODO:**
 - Week 3: yfinance / FRED / FinMind adapters
-- Week 4: Scoring task wiring
-- Week 5–8: more sources, frontend drilldown, deploy
+- Week 4: Scoring task wiring (Bayesian credibility update)
+- Week 5+: more sources, frontend drilldown, public launch
 
 ## Setup (Windows / PowerShell)
 
@@ -103,17 +118,23 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 # Edit .env, fill:
 #   DATABASE_URL=postgresql+psycopg://postgres:YOUR_PW@db.YOUR_REF.supabase.co:5432/postgres
-#   ANTHROPIC_API_KEY=sk-ant-...   (needed from Week 2 onward)
+# ANTHROPIC_API_KEY is NOT required — extract uses the `claude` CLI's OAuth
 
 # First ingest — pulls latest items from the three RSS feeds
 python -m tasks.run ingest
+
+# Extract claims — requires `claude` CLI installed and logged in.
+# Run `claude` once interactively first to complete the OAuth login.
+python -m tasks.run extract --limit 50
 
 # Run tests
 pytest
 ```
 
 After `ingest` finishes, open the **Table Editor → articles** in
-Supabase. You should see ~50–100 freshly inserted rows.
+Supabase. You should see ~50–100 freshly inserted rows. After
+`extract`, the `claims` table will have any forward-looking predictions
+the model identified.
 
 ### 5. Frontend
 
@@ -136,7 +157,7 @@ Expected on the page:
 - **Tracked sources** → Reuters / CNBC / Yahoo Finance.
 - **Recently ingested** → 10 most recent articles from Step 4.
 
-### 6. Hourly cron (free, via GitHub Actions)
+### 6a. Hourly ingest cron (free, via GitHub Actions)
 
 ```powershell
 cd D:\claude_code\news-credibility
@@ -162,6 +183,38 @@ On GitHub: **Settings → Secrets and variables → Actions → New repository s
 
 Then **Actions → Hourly ingest → Run workflow** to verify. After the
 green checkmark, it runs every hour automatically.
+
+> ⚠️ The workflow only runs **ingest**. Extract requires the `claude`
+> CLI's OAuth session which only exists locally — Actions can't run it.
+
+### 6b. Local extract (manual, or Windows Task Scheduler)
+
+Once a day or so, run from your dev machine:
+
+```powershell
+cd D:\claude_code\news-credibility\backend
+.\.venv\Scripts\Activate.ps1
+python -m tasks.run extract --limit 50
+```
+
+The first article in a batch costs ~$0.05 against your Claude
+subscription (cache miss on the system prompt); subsequent articles
+within the same 5-minute window drop to ~$0.005 thanks to Claude
+Code's automatic prompt caching.
+
+**Want it scheduled?** Windows Task Scheduler can run it hourly when
+your machine is on:
+
+1. Open Task Scheduler → **Create Basic Task…**
+2. Trigger: **Daily**, repeat **every 1 hour** for 1 day, indefinitely
+3. Action: **Start a program**
+   - Program: `powershell.exe`
+   - Arguments: `-NoProfile -ExecutionPolicy Bypass -Command "cd D:\claude_code\news-credibility\backend; .\.venv\Scripts\Activate.ps1; python -m tasks.run extract --limit 50 *>> D:\claude_code\news-credibility\extract.log"`
+4. Conditions tab → uncheck *"Start only if computer is on AC power"*
+   if you want it to run on battery too.
+
+The task only succeeds while you're logged in (your `claude` OAuth
+session is per-user). That's fine for personal/MVP use.
 
 ### 7. Deploy frontend to Vercel
 

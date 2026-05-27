@@ -18,8 +18,8 @@ trafilatura==1.12.2
 yfinance==0.2.48
 fredapi==0.5.2
 
-# CLI runner
-typer==0.12.5
+# CLI runner — 0.15+ required, 0.12.x breaks against click >= 8.2
+typer>=0.15.1,<0.20
 
 # Dev
 pytest==8.3.3

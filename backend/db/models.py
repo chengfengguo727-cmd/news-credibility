@@ -55,7 +55,14 @@ class Claim(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     article_id: Mapped[int] = mapped_column(ForeignKey("articles.id", ondelete="CASCADE"), index=True)
-    type: Mapped[ClaimType] = mapped_column(Enum(ClaimType), index=True)
+    # The Postgres enum was created as `claim_type` (snake_case) in schema.sql.
+    # Without `name=...`, SQLAlchemy would derive `claimtype` and fail at SELECT
+    # with: type "claimtype" does not exist. `create_type=False` prevents
+    # SQLAlchemy from trying to redundantly CREATE TYPE at startup.
+    type: Mapped[ClaimType] = mapped_column(
+        Enum(ClaimType, name="claim_type", create_type=False),
+        index=True,
+    )
     ticker: Mapped[str | None] = mapped_column(String(16), index=True, nullable=True)
     topic: Mapped[str | None] = mapped_column(String(64), nullable=True)
     predicted_value: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -79,7 +86,12 @@ class ClaimOutcome(Base):
         ForeignKey("claims.id", ondelete="CASCADE"), unique=True, index=True
     )
     actual_value: Mapped[float | None] = mapped_column(Float, nullable=True)
-    outcome: Mapped[Outcome] = mapped_column(Enum(Outcome), default=Outcome.pending, index=True)
+    # Postgres enum was created as `outcome_t` in schema.sql; same gotcha as claim_type above.
+    outcome: Mapped[Outcome] = mapped_column(
+        Enum(Outcome, name="outcome_t", create_type=False),
+        default=Outcome.pending,
+        index=True,
+    )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -92,7 +104,10 @@ class SourceScore(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     source: Mapped[str] = mapped_column(String(64), index=True)
-    type: Mapped[ClaimType] = mapped_column(Enum(ClaimType), index=True)
+    type: Mapped[ClaimType] = mapped_column(
+        Enum(ClaimType, name="claim_type", create_type=False),
+        index=True,
+    )
     alpha: Mapped[float] = mapped_column(Float, default=1.0)
     beta: Mapped[float] = mapped_column(Float, default=1.0)
     score: Mapped[float] = mapped_column(Float, default=0.5)

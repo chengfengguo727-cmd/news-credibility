@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from db.models import ClaimType
-from extract.claim_extractor import _parse_claims, _parse_deadline
+from db.models import ClaimType, EventType, Sentiment
+from extract.claim_extractor import _parse_claims, _parse_deadline, _parse_meta
 
 
 def test_empty_structured_returns_no_rows():
@@ -107,3 +107,87 @@ def test_parse_deadline_handles_z_suffix_and_naive():
     assert _parse_deadline("2026-05-24T12:34:56Z") == datetime(
         2026, 5, 24, 12, 34, 56, tzinfo=timezone.utc
     )
+
+
+# --- _parse_meta tests -----------------------------------------------
+
+def test_parse_meta_empty_returns_none_meta():
+    meta, tickers, sectors, tags = _parse_meta({}, article_id=1)
+    assert meta is None
+    assert tickers == []
+    assert sectors == []
+    assert tags == []
+
+
+def test_parse_meta_full_payload():
+    structured = {
+        "meta": {
+            "overall_sentiment": "bullish",
+            "event_type": "earnings",
+            "article_quality": 0.85,
+            "is_breaking": True,
+            "tickers": [
+                {"ticker": "NVDA", "sentiment": "bullish", "is_primary": True},
+                {"ticker": "AMD", "sentiment": "neutral", "is_primary": False},
+            ],
+            "sectors": ["semiconductors", "ai"],
+            "narrative_tags": ["ai_demand", "earnings_beat"],
+        }
+    }
+    meta, tickers, sectors, tags = _parse_meta(structured, article_id=42)
+
+    assert meta is not None
+    assert meta.article_id == 42
+    assert meta.overall_sentiment == Sentiment.bullish
+    assert meta.event_type == EventType.earnings
+    assert meta.article_quality == 0.85
+    assert meta.is_breaking is True
+
+    assert len(tickers) == 2
+    assert tickers[0].ticker == "NVDA"
+    assert tickers[0].sentiment == Sentiment.bullish
+    assert tickers[0].is_primary is True
+    assert tickers[1].is_primary is False
+
+    assert [s.sector for s in sectors] == ["semiconductors", "ai"]
+    assert [t.tag for t in tags] == ["ai_demand", "earnings_beat"]
+
+
+def test_parse_meta_dedupes_tickers_case_insensitive():
+    structured = {
+        "meta": {
+            "overall_sentiment": "neutral",
+            "event_type": "market_summary",
+            "article_quality": 0.5,
+            "is_breaking": False,
+            "tickers": [
+                {"ticker": "AAPL", "sentiment": "neutral", "is_primary": True},
+                {"ticker": "aapl", "sentiment": "bullish", "is_primary": False},  # dup
+                {"ticker": "MSFT", "sentiment": "neutral", "is_primary": False},
+            ],
+            "sectors": ["consumer_tech", "consumer_tech"],  # dup
+            "narrative_tags": [],
+        }
+    }
+    _meta, tickers, sectors, _tags = _parse_meta(structured, article_id=1)
+    assert [t.ticker for t in tickers] == ["AAPL", "MSFT"]
+    assert [s.sector for s in sectors] == ["consumer_tech"]
+
+
+def test_parse_meta_invalid_enum_becomes_none():
+    structured = {
+        "meta": {
+            "overall_sentiment": "ecstatic",  # not a valid sentiment
+            "event_type": "fantastic",         # not a valid event
+            "article_quality": 0.5,
+            "is_breaking": False,
+            "tickers": [],
+            "sectors": [],
+            "narrative_tags": [],
+        }
+    }
+    meta, _, _, _ = _parse_meta(structured, article_id=1)
+    assert meta is not None
+    assert meta.overall_sentiment is None
+    assert meta.event_type is None
+    assert meta.article_quality == 0.5  # still parsed

@@ -23,9 +23,19 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
-from db.models import Article, Claim, ClaimType
+from db.models import (
+    Article,
+    ArticleMeta,
+    ArticleNarrativeTag,
+    ArticleSector,
+    ArticleTicker,
+    Claim,
+    ClaimType,
+    EventType,
+    Sentiment,
+)
 from db.session import session_factory
 
 log = logging.getLogger(__name__)
@@ -38,6 +48,11 @@ PER_ARTICLE_BUDGET_USD = 0.10  # safety cap per `claude` invocation
 SUBPROCESS_TIMEOUT_S = 120
 
 
+# --- Enum values shared between schema + parsing ---------------------
+_SENTIMENT_VALUES = [s.value for s in Sentiment]
+_EVENT_TYPE_VALUES = [e.value for e in EventType]
+
+
 # --- JSON schema (claude --json-schema enforces this) ----------------
 OUTPUT_SCHEMA: dict = {
     "type": "object",
@@ -45,15 +60,12 @@ OUTPUT_SCHEMA: dict = {
     "properties": {
         "claims": {
             "type": "array",
-            "description": "Zero or more forward-looking market-verifiable claims.",
+            "description": "Zero or more forward-looking market-verifiable claims. Empty for pure-report articles.",
             "items": {
                 "type": "object",
                 "additionalProperties": False,
                 "properties": {
-                    "type": {
-                        "type": "string",
-                        "enum": ["analyst_target", "macro", "stock_event"],
-                    },
+                    "type": {"type": "string", "enum": ["analyst_target", "macro", "stock_event"]},
                     "ticker": {"type": "string"},
                     "topic": {"type": "string"},
                     "predicted_value": {"type": "number"},
@@ -64,9 +76,51 @@ OUTPUT_SCHEMA: dict = {
                 },
                 "required": ["type", "raw_text", "confidence"],
             },
-        }
+        },
+        "meta": {
+            "type": "object",
+            "description": "Whole-article metadata. Filled for every article including 0-claim ones.",
+            "additionalProperties": False,
+            "properties": {
+                "overall_sentiment": {"type": "string", "enum": _SENTIMENT_VALUES},
+                "event_type": {"type": "string", "enum": _EVENT_TYPE_VALUES},
+                "article_quality": {
+                    "type": "number",
+                    "description": "0..1. 1=original reporting with quotes/data; 0=bot rephrase of another wire.",
+                },
+                "is_breaking": {"type": "boolean"},
+                "tickers": {
+                    "type": "array",
+                    "description": "All tickers explicitly mentioned (max 20). Use canonical symbols (AAPL, 2330.TW).",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "ticker": {"type": "string"},
+                            "sentiment": {"type": "string", "enum": _SENTIMENT_VALUES},
+                            "is_primary": {"type": "boolean", "description": "True if the article is mainly about this company."},
+                        },
+                        "required": ["ticker", "sentiment", "is_primary"],
+                    },
+                },
+                "sectors": {
+                    "type": "array",
+                    "description": "0..5 short sector labels — semiconductors, banks, energy, ev, biotech, cloud, retail, ai, crypto, real_estate, defense, consumer, healthcare, autos, telecom, media, materials, industrials, etc.",
+                    "items": {"type": "string"},
+                },
+                "narrative_tags": {
+                    "type": "array",
+                    "description": "0..5 short narrative tags — e.g. 'ai_demand', 'rate_cuts', 'china_slowdown', 'soft_landing', 'earnings_recession'. snake_case.",
+                    "items": {"type": "string"},
+                },
+            },
+            "required": [
+                "overall_sentiment", "event_type", "article_quality",
+                "is_breaking", "tickers", "sectors", "narrative_tags",
+            ],
+        },
     },
-    "required": ["claims"],
+    "required": ["claims", "meta"],
 }
 
 
@@ -333,7 +387,81 @@ When you see a ticker symbol, use the canonical form expected by market data sou
 
 If the article gives a company name with no ticker (e.g. "Foxconn") and you know the canonical ticker (`2317.TW`), supply it. If you don't know with high confidence, omit `ticker` rather than guess — better to drop one row than corrupt the validation step downstream.
 
-You will see the article date, source, URL, title, and body. Use them all to inform your extraction. Now wait for the article."""
+You will see the article date, source, URL, title, and body. Use them all to inform your extraction.
+
+# Whole-article metadata (the `meta` block)
+
+ALWAYS fill the `meta` block — even when `claims` is empty. This is how we get usable signal out of pure-report articles. Be thorough but don't invent.
+
+## `overall_sentiment` — one of `bullish` / `bearish` / `neutral` / `mixed`
+
+Does the *article as a whole* lean optimistic or pessimistic about its subject(s)?
+- `bullish` — net positive market view ("strong demand", "raises guidance", "all-time high")
+- `bearish` — net negative ("slowdown fears", "misses estimates", "lawsuit", "delisting")
+- `neutral` — factual / informational with no clear directional tilt ("Fed holds rates as expected", "company files 10-K")
+- `mixed` — both sides given comparable weight ("strong revenue but weak margin guidance")
+
+If the article is pure macro reporting with no clear lean, prefer `neutral`. If you genuinely can't tell, `neutral` again — don't use `mixed` as a "I don't know" cop-out.
+
+## `event_type` — one enum, the dominant frame of the article
+
+Pick the SINGLE best fit:
+- `earnings` — earnings report, preview, or reaction (quarterly/annual)
+- `m_and_a` — mergers, acquisitions, divestitures, spinoffs, deal speculation
+- `regulatory` — government action, antitrust, FDA, FCC, FTC, foreign regulator
+- `exec_change` — CEO/CFO/board hires, departures, succession
+- `product_launch` — new product, service, model, or facility coming online
+- `macro_release` — Fed decision, CPI/PPI/GDP/payrolls/PMI release or preview
+- `market_summary` — daily/weekly/intraday market recap (e.g. "stocks close at record")
+- `opinion` — editorial, op-ed, "Why I think…", strategist commentary
+- `lawsuit` — legal action filed, settled, ruled on
+- `guidance` — company forward guidance, capex announcement, outlook update
+- `other` — only when nothing above fits
+
+## `article_quality` — 0..1 numeric
+
+Estimate the originality and depth of the reporting:
+- **0.9+** — Original investigation, named-source quotes, exclusive data
+- **0.7-0.89** — Solid reporting with multiple sources / analysis
+- **0.5-0.69** — Standard wire coverage; competent but not exclusive
+- **0.3-0.49** — Light rewrite of a press release or another wire's coverage
+- **0.0-0.29** — Bot-generated summary, listicle, content farm output
+
+You're guessing — that's fine. Aim for relative ordering across articles, not absolute precision.
+
+## `is_breaking` — boolean
+
+`true` if the article reports news that is *new and time-sensitive at publish time* (just-released earnings, just-announced deal, just-published Fed statement, just-occurred event). `false` for analysis pieces, opinion, summaries, retrospectives, previews of future events.
+
+## `tickers` — array of {ticker, sentiment, is_primary}
+
+List EVERY ticker explicitly mentioned, up to 20. Different from the claim ticker — this is just "what stocks does this article touch?".
+- `ticker` — canonical symbol (`AAPL`, `2330.TW`, `0700.HK`). If a company is named but no ticker given and you're confident of the symbol, include it.
+- `sentiment` — sentiment specifically about *this ticker* in this article. May differ from overall_sentiment (e.g. an article on chip-sector M&A might be bullish for AMD but bearish for INTC).
+- `is_primary` — `true` only for the 1-2 stocks the article is mainly about. `false` for tickers mentioned in passing.
+
+For market_summary articles that list a dozen movers, mark all as `is_primary=false`. For an earnings preview on NVDA that also references AMD as comp, NVDA `is_primary=true`, AMD `is_primary=false`.
+
+Skip indices (^GSPC, ^DJI, ^IXIC) unless the article is specifically about an index call.
+
+## `sectors` — 0..5 short labels
+
+Tag with broad GICS-ish sector labels. Keep them lowercase, snake_case, and prefer this controlled vocabulary when possible:
+`semiconductors, ai, software, cloud, consumer_tech, ev, autos, banks, fintech, insurance, energy, oil_gas, renewable, utilities, biotech, pharma, healthcare, hospitals, retail, ecommerce, consumer_staples, food_beverage, real_estate, reits, defense, aerospace, industrials, materials, mining, chemicals, transport, airlines, shipping, telecom, media, entertainment, gaming, crypto, payments`
+
+If a fitting label isn't in the list, invent one (snake_case). Use 1-3 sectors typically; 5 max for cross-cutting articles. For pure macro articles (Fed, CPI), use `[]`.
+
+## `narrative_tags` — 0..5 short story tags
+
+Tag with the broader market narratives the article participates in. Examples: `ai_demand`, `ai_capex`, `rate_cuts`, `soft_landing`, `earnings_recession`, `china_slowdown`, `china_stimulus`, `inflation_sticky`, `oil_supply_shock`, `evs_pricing_war`, `cloud_growth`, `regulatory_crackdown`, `re_shoring`. Keep snake_case.
+
+Empty `[]` is OK when the article is pure single-company news with no clear macro narrative.
+
+# Output format
+
+Produce ONE JSON object matching the schema. ALWAYS include both `claims` and `meta`. `claims` may be empty `[]`; `meta` must be fully populated for every article.
+
+Now wait for the article."""
 
 
 # --- Implementation --------------------------------------------------
@@ -343,6 +471,9 @@ You will see the article date, source, URL, title, and body. Use them all to inf
 class ExtractStats:
     article_id: int
     claims_written: int
+    tickers_written: int = 0
+    sectors_written: int = 0
+    tags_written: int = 0
     cost_usd: float = 0.0
     error: str | None = None
 
@@ -372,7 +503,7 @@ def _parse_deadline(raw: str | None) -> datetime | None:
 
 
 def _parse_claims(structured: dict, article_id: int) -> list[Claim]:
-    """Turn the schema-validated structured_output into ORM rows. Pure — testable."""
+    """Turn the schema-validated structured_output into Claim ORM rows. Pure."""
     out: list[Claim] = []
     for raw in structured.get("claims", []) or []:
         try:
@@ -393,6 +524,73 @@ def _parse_claims(structured: dict, article_id: int) -> list[Claim]:
             )
         )
     return out
+
+
+def _safe_enum(enum_cls, raw: str | None):
+    """Return enum member or None for missing/invalid raw value."""
+    if raw is None:
+        return None
+    try:
+        return enum_cls(raw)
+    except (KeyError, ValueError):
+        return None
+
+
+def _parse_meta(structured: dict, article_id: int) -> tuple[
+    ArticleMeta | None,
+    list[ArticleTicker],
+    list[ArticleSector],
+    list[ArticleNarrativeTag],
+]:
+    """Turn the structured_output['meta'] block into ORM rows. Pure."""
+    meta_raw = structured.get("meta") or {}
+    if not meta_raw:
+        return None, [], [], []
+
+    meta = ArticleMeta(
+        article_id=article_id,
+        overall_sentiment=_safe_enum(Sentiment, meta_raw.get("overall_sentiment")),
+        event_type=_safe_enum(EventType, meta_raw.get("event_type")),
+        article_quality=meta_raw.get("article_quality"),
+        is_breaking=meta_raw.get("is_breaking"),
+    )
+
+    tickers: list[ArticleTicker] = []
+    # de-dupe by ticker symbol (case-insensitive), keep first occurrence
+    seen: set[str] = set()
+    for t in (meta_raw.get("tickers") or [])[:20]:
+        sym = (t.get("ticker") or "").strip()
+        if not sym or sym.lower() in seen:
+            continue
+        seen.add(sym.lower())
+        tickers.append(
+            ArticleTicker(
+                article_id=article_id,
+                ticker=sym[:16].upper() if not any(c in sym for c in ".-") else sym[:16],
+                sentiment=_safe_enum(Sentiment, t.get("sentiment")),
+                is_primary=bool(t.get("is_primary")),
+            )
+        )
+
+    sectors: list[ArticleSector] = []
+    seen_s: set[str] = set()
+    for s in (meta_raw.get("sectors") or [])[:8]:
+        s_clean = (s or "").strip().lower()
+        if not s_clean or s_clean in seen_s:
+            continue
+        seen_s.add(s_clean)
+        sectors.append(ArticleSector(article_id=article_id, sector=s_clean[:64]))
+
+    tags: list[ArticleNarrativeTag] = []
+    seen_t: set[str] = set()
+    for tag in (meta_raw.get("narrative_tags") or [])[:8]:
+        t_clean = (tag or "").strip().lower()
+        if not t_clean or t_clean in seen_t:
+            continue
+        seen_t.add(t_clean)
+        tags.append(ArticleNarrativeTag(article_id=article_id, tag=t_clean[:64]))
+
+    return meta, tickers, sectors, tags
 
 
 def _run_claude(system_prompt: str, user_text: str, schema: dict, *, model: str = MODEL,
@@ -442,13 +640,20 @@ def _run_claude(system_prompt: str, user_text: str, schema: dict, *, model: str 
     return envelope
 
 
-def extract_claims_for_article(article_id: int) -> ExtractStats:
+def extract_claims_for_article(article_id: int, *, force: bool = False) -> ExtractStats:
+    """Extract claims + metadata for one article.
+
+    Skipped when the article already has an `article_meta` row, unless `force=True`.
+    On re-run, deletes existing claims/meta/tickers/sectors/tags first to avoid dupes.
+    """
     Session_ = session_factory()
     with Session_() as db:
         article = db.get(Article, article_id)
         if article is None:
             return ExtractStats(article_id, 0, error="article not found")
-        if article.extracted:
+
+        already_done = db.get(ArticleMeta, article_id) is not None
+        if already_done and not force:
             return ExtractStats(article_id, 0)
 
         try:
@@ -459,22 +664,58 @@ def extract_claims_for_article(article_id: int) -> ExtractStats:
 
         structured = envelope.get("structured_output") or {}
         claims = _parse_claims(structured, article.id)
+        meta, tickers, sectors, tags = _parse_meta(structured, article.id)
+
+        # Re-run safety: delete existing rows for this article before re-inserting.
+        # This makes the operation idempotent — same article re-processed any
+        # number of times never produces duplicate rows.
+        db.execute(delete(Claim).where(Claim.article_id == article.id))
+        db.execute(delete(ArticleTicker).where(ArticleTicker.article_id == article.id))
+        db.execute(delete(ArticleSector).where(ArticleSector.article_id == article.id))
+        db.execute(delete(ArticleNarrativeTag).where(ArticleNarrativeTag.article_id == article.id))
+        db.execute(delete(ArticleMeta).where(ArticleMeta.article_id == article.id))
+
         for c in claims:
             db.add(c)
+        if meta is not None:
+            db.add(meta)
+        for t in tickers:
+            db.add(t)
+        for s in sectors:
+            db.add(s)
+        for tg in tags:
+            db.add(tg)
+
         article.extracted = True
         db.commit()
 
         cost = float(envelope.get("total_cost_usd") or 0.0)
-        return ExtractStats(article_id, len(claims), cost_usd=cost)
+        return ExtractStats(
+            article_id=article_id,
+            claims_written=len(claims),
+            tickers_written=len(tickers),
+            sectors_written=len(sectors),
+            tags_written=len(tags),
+            cost_usd=cost,
+        )
 
 
 def extract_batch(limit: int = 50) -> list[ExtractStats]:
+    """Pick articles that don't yet have an `article_meta` row.
+
+    This naturally picks up both *new* articles and *backfill* (articles that
+    were extracted under the old claim-only schema and lack meta). When meta
+    catches up across the whole corpus, this query starts returning only newly
+    ingested articles.
+    """
     Session_ = session_factory()
     with Session_() as db:
+        # outer join + filter is portable and works on Supabase Postgres
+        meta_subq = select(ArticleMeta.article_id)
         ids = (
             db.execute(
                 select(Article.id)
-                .where(~Article.extracted)
+                .where(~Article.id.in_(meta_subq))
                 .order_by(Article.published_at.desc().nullslast())
                 .limit(limit)
             )
@@ -483,15 +724,16 @@ def extract_batch(limit: int = 50) -> list[ExtractStats]:
         )
 
     if not ids:
-        log.info("no unextracted articles")
+        log.info("no articles needing extraction (meta already present)")
         return []
 
     results: list[ExtractStats] = []
     for aid in ids:
         s = extract_claims_for_article(aid)
         log.info(
-            "article=%s claims=%d cost_usd=%.4f err=%s",
-            s.article_id, s.claims_written, s.cost_usd, s.error or "-",
+            "article=%s claims=%d tickers=%d sectors=%d tags=%d cost_usd=%.4f err=%s",
+            s.article_id, s.claims_written, s.tickers_written, s.sectors_written,
+            s.tags_written, s.cost_usd, s.error or "-",
         )
         results.append(s)
     return results

@@ -33,6 +33,27 @@ class Outcome(str, enum.Enum):
     miss = "miss"
 
 
+class Sentiment(str, enum.Enum):
+    bullish = "bullish"
+    bearish = "bearish"
+    neutral = "neutral"
+    mixed = "mixed"
+
+
+class EventType(str, enum.Enum):
+    earnings = "earnings"
+    m_and_a = "m_and_a"
+    regulatory = "regulatory"
+    exec_change = "exec_change"
+    product_launch = "product_launch"
+    macro_release = "macro_release"
+    market_summary = "market_summary"
+    opinion = "opinion"
+    lawsuit = "lawsuit"
+    guidance = "guidance"
+    other = "other"
+
+
 class Article(Base):
     __tablename__ = "articles"
 
@@ -48,6 +69,18 @@ class Article(Base):
     extracted: Mapped[bool] = mapped_column(default=False, index=True)
 
     claims: Mapped[list[Claim]] = relationship(back_populates="article", cascade="all, delete-orphan")
+    meta: Mapped[ArticleMeta | None] = relationship(
+        back_populates="article", cascade="all, delete-orphan", uselist=False
+    )
+    tickers: Mapped[list[ArticleTicker]] = relationship(
+        back_populates="article", cascade="all, delete-orphan"
+    )
+    sectors: Mapped[list[ArticleSector]] = relationship(
+        back_populates="article", cascade="all, delete-orphan"
+    )
+    narrative_tags: Mapped[list[ArticleNarrativeTag]] = relationship(
+        back_populates="article", cascade="all, delete-orphan"
+    )
 
 
 class Claim(Base):
@@ -96,6 +129,67 @@ class ClaimOutcome(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     claim: Mapped[Claim] = relationship(back_populates="outcome")
+
+
+class ArticleMeta(Base):
+    """Tier 1–3 metadata extracted by the LLM alongside claims."""
+    __tablename__ = "article_meta"
+
+    article_id: Mapped[int] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), primary_key=True
+    )
+    overall_sentiment: Mapped[Sentiment | None] = mapped_column(
+        Enum(Sentiment, name="sentiment_t", create_type=False), nullable=True
+    )
+    event_type: Mapped[EventType | None] = mapped_column(
+        Enum(EventType, name="event_type_t", create_type=False), nullable=True, index=True
+    )
+    article_quality: Mapped[float | None] = mapped_column(Float, nullable=True)
+    is_breaking: Mapped[bool | None] = mapped_column(default=None, nullable=True)
+    extracted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+    article: Mapped[Article] = relationship(back_populates="meta")
+
+
+class ArticleTicker(Base):
+    """One row per (article, ticker) pair — model can flag is_primary."""
+    __tablename__ = "article_tickers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    article_id: Mapped[int] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), index=True
+    )
+    ticker: Mapped[str] = mapped_column(String(16), index=True)
+    sentiment: Mapped[Sentiment | None] = mapped_column(
+        Enum(Sentiment, name="sentiment_t", create_type=False), nullable=True
+    )
+    is_primary: Mapped[bool] = mapped_column(default=False)
+
+    article: Mapped[Article] = relationship(back_populates="tickers")
+
+
+class ArticleSector(Base):
+    __tablename__ = "article_sectors"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    article_id: Mapped[int] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), index=True
+    )
+    sector: Mapped[str] = mapped_column(String(64), index=True)
+
+    article: Mapped[Article] = relationship(back_populates="sectors")
+
+
+class ArticleNarrativeTag(Base):
+    __tablename__ = "article_narrative_tags"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    article_id: Mapped[int] = mapped_column(
+        ForeignKey("articles.id", ondelete="CASCADE"), index=True
+    )
+    tag: Mapped[str] = mapped_column(String(64), index=True)
+
+    article: Mapped[Article] = relationship(back_populates="narrative_tags")
 
 
 class SourceScore(Base):

@@ -225,6 +225,44 @@ session is per-user). That's fine for personal/MVP use.
 4. Deploy. The build serves the same page you saw locally, backed by
    the live Supabase project.
 
+## Useful queries
+
+Once `extract` has populated metadata, these run in the Supabase SQL Editor:
+
+```sql
+-- What's the market talking about in the last 24h? (sentiment-split)
+SELECT t.ticker,
+       COUNT(*) FILTER (WHERE t.sentiment='bullish') AS bull,
+       COUNT(*) FILTER (WHERE t.sentiment='bearish') AS bear,
+       COUNT(*) AS mentions
+FROM article_tickers t JOIN articles a ON a.id = t.article_id
+WHERE a.published_at > now() - interval '24 hours'
+GROUP BY t.ticker ORDER BY mentions DESC LIMIT 20;
+
+-- Fastest-rising tickers: 24h mentions vs 7-day daily baseline
+SELECT * FROM v_ticker_mention_growth_24h LIMIT 20;
+
+-- Hot sectors this week
+SELECT s.sector, COUNT(*) AS mentions
+FROM article_sectors s JOIN articles a ON a.id = s.article_id
+WHERE a.published_at > now() - interval '7 days'
+GROUP BY s.sector ORDER BY mentions DESC;
+
+-- Trending narratives
+SELECT tag, COUNT(*) AS n
+FROM article_narrative_tags nt JOIN articles a ON a.id = nt.article_id
+WHERE a.published_at > now() - interval '7 days'
+GROUP BY tag ORDER BY n DESC LIMIT 20;
+
+-- Per-source claim density (how often does each source make testable calls?)
+SELECT a.source,
+       COUNT(DISTINCT a.id) AS articles,
+       COUNT(c.id) AS claims,
+       ROUND(COUNT(c.id)::numeric / NULLIF(COUNT(DISTINCT a.id),0), 2) AS claims_per_article
+FROM articles a LEFT JOIN claims c ON c.article_id = a.id
+GROUP BY a.source ORDER BY claims_per_article DESC;
+```
+
 ## Data & legal notes
 
 - Sources used are free and public: RSS feeds, GDELT, yfinance, FRED,

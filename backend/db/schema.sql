@@ -129,6 +129,58 @@ CREATE TABLE IF NOT EXISTS source_scores (
 );
 CREATE INDEX IF NOT EXISTS idx_scores_source ON source_scores (source);
 
+-- Views for the frontend dashboards ----------------------------------
+
+-- Top tickers by mentions in last 7 days, with sentiment breakdown
+CREATE OR REPLACE VIEW v_top_tickers_7d AS
+SELECT
+    t.ticker,
+    COUNT(*)                                     AS mentions,
+    COUNT(*) FILTER (WHERE t.sentiment='bullish') AS bull,
+    COUNT(*) FILTER (WHERE t.sentiment='bearish') AS bear,
+    COUNT(*) FILTER (WHERE t.sentiment='neutral') AS neutral,
+    COUNT(*) FILTER (WHERE t.sentiment='mixed')   AS mixed,
+    COUNT(*) FILTER (WHERE t.is_primary)         AS primary_count
+FROM article_tickers t
+JOIN articles a ON a.id = t.article_id
+WHERE a.published_at > now() - interval '7 days'
+  AND t.ticker NOT LIKE '^%'   -- skip indices
+GROUP BY t.ticker
+ORDER BY mentions DESC, primary_count DESC;
+
+-- Top sectors in last 7 days
+CREATE OR REPLACE VIEW v_top_sectors_7d AS
+SELECT s.sector, COUNT(*) AS mentions
+FROM article_sectors s
+JOIN articles a ON a.id = s.article_id
+WHERE a.published_at > now() - interval '7 days'
+GROUP BY s.sector
+ORDER BY mentions DESC;
+
+-- Top narrative tags in last 7 days
+CREATE OR REPLACE VIEW v_top_narratives_7d AS
+SELECT n.tag, COUNT(*) AS mentions
+FROM article_narrative_tags n
+JOIN articles a ON a.id = n.article_id
+WHERE a.published_at > now() - interval '7 days'
+GROUP BY n.tag
+ORDER BY mentions DESC;
+
+-- Per-source lifetime stats
+CREATE OR REPLACE VIEW v_source_stats AS
+SELECT
+    a.source,
+    COUNT(*)                                      AS articles_total,
+    COUNT(m.article_id)                           AS articles_with_meta,
+    ROUND(AVG(m.article_quality)::numeric, 2)     AS avg_quality,
+    COUNT(c.id)                                   AS claims_total,
+    ROUND(COUNT(c.id)::numeric / NULLIF(COUNT(*),0), 3) AS claims_per_article
+FROM articles a
+LEFT JOIN article_meta m ON m.article_id = a.id
+LEFT JOIN claims c        ON c.article_id = a.id
+GROUP BY a.source
+ORDER BY articles_total DESC;
+
 -- View: 24h ticker mention growth rate vs 7-day baseline -------------
 -- Use case: "which companies has the news cycle suddenly latched onto?"
 -- Excludes tickers with <3 mentions in 24h (noise floor) and reports both
@@ -168,7 +220,9 @@ ORDER BY growth_ratio DESC NULLS LAST, mentions_24h DESC;
 GRANT SELECT ON articles, claims, claim_outcomes, source_scores TO anon, authenticated;
 GRANT SELECT ON article_meta, article_tickers, article_sectors, article_narrative_tags
     TO anon, authenticated;
-GRANT SELECT ON v_ticker_mention_growth_24h TO anon, authenticated;
+GRANT SELECT ON v_ticker_mention_growth_24h, v_top_tickers_7d, v_top_sectors_7d,
+                 v_top_narratives_7d, v_source_stats
+    TO anon, authenticated;
 
 -- Row-Level Security -------------------------------------------------
 ALTER TABLE articles       ENABLE ROW LEVEL SECURITY;

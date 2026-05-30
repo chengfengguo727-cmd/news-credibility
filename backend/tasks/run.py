@@ -39,13 +39,15 @@ def extract(limit: int = typer.Option(50, help="Max articles to process this run
     from extract.claim_extractor import extract_batch
 
     stats = extract_batch(limit=limit)
-    total_claims = sum(s.claims_written for s in stats)
-    cache_reads = sum(s.cache_read_tokens for s in stats)
-    cache_writes = sum(s.cache_write_tokens for s in stats)
+    claims = sum(s.claims_written for s in stats)
+    tickers = sum(s.tickers_written for s in stats)
+    sectors = sum(s.sectors_written for s in stats)
+    tags = sum(s.tags_written for s in stats)
+    cost = sum(s.cost_usd for s in stats)
     errors = sum(1 for s in stats if s.error)
     typer.echo(
-        f"articles={len(stats)} claims={total_claims} "
-        f"cache_read_tok={cache_reads} cache_write_tok={cache_writes} errors={errors}"
+        f"articles={len(stats)} claims={claims} tickers={tickers} "
+        f"sectors={sectors} tags={tags} errors={errors} cost_usd={cost:.4f}"
     )
 
 

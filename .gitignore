@@ -25,3 +25,6 @@ Thumbs.db
 *.sqlite
 *.dump
 *.sql.gz
+
+# Logs
+*.log

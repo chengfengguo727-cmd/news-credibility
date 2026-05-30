@@ -1,0 +1,375 @@
+2026-05-28 16:00:10,664 INFO extract.claim_extractor article=3116 claims=0 tickers=0 sectors=2 tags=2 cost_usd=0.0626 err=-
+2026-05-28 16:01:37,768 INFO extract.claim_extractor article=3113 claims=0 tickers=0 sectors=1 tags=2 cost_usd=0.0640 err=-
+2026-05-28 16:02:50,810 INFO extract.claim_extractor article=3114 claims=1 tickers=2 sectors=2 tags=2 cost_usd=0.0552 err=-
+2026-05-28 16:04:00,226 INFO extract.claim_extractor article=3117 claims=1 tickers=0 sectors=0 tags=2 cost_usd=0.0553 err=-
+2026-05-28 16:05:42,615 INFO extract.claim_extractor article=3119 claims=0 tickers=2 sectors=2 tags=1 cost_usd=0.0743 err=-
+2026-05-28 16:06:02,221 INFO extract.claim_extractor article=3092 claims=0 tickers=0 sectors=2 tags=2 cost_usd=0.0173 err=-
+2026-05-28 16:06:28,845 INFO extract.claim_extractor article=3096 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0203 err=-
+2026-05-28 16:06:52,227 INFO extract.claim_extractor article=3087 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0204 err=-
+2026-05-28 16:08:13,886 INFO extract.claim_extractor article=3118 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0572 err=-
+2026-05-28 16:08:45,152 INFO extract.claim_extractor article=3112 claims=0 tickers=0 sectors=1 tags=2 cost_usd=0.0266 err=-
+2026-05-28 16:09:34,381 INFO extract.claim_extractor article=3115 claims=0 tickers=0 sectors=2 tags=4 cost_usd=0.0371 err=-
+2026-05-28 16:09:55,669 INFO extract.claim_extractor article=3088 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0189 err=-
+2026-05-28 16:10:13,533 INFO extract.claim_extractor article=3109 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0159 err=-
+2026-05-28 16:10:45,202 INFO extract.claim_extractor article=3097 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0262 err=-
+2026-05-28 16:11:03,396 INFO extract.claim_extractor article=3089 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0171 err=-
+2026-05-28 16:11:28,934 INFO extract.claim_extractor article=3103 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0222 err=-
+2026-05-28 16:11:51,752 INFO extract.claim_extractor article=3090 claims=0 tickers=0 sectors=2 tags=2 cost_usd=0.0190 err=-
+2026-05-28 16:12:43,357 INFO extract.claim_extractor article=3041 claims=0 tickers=3 sectors=2 tags=1 cost_usd=0.0424 err=-
+2026-05-28 16:13:16,973 INFO extract.claim_extractor article=3044 claims=0 tickers=0 sectors=0 tags=2 cost_usd=0.0267 err=-
+2026-05-28 16:13:35,337 INFO extract.claim_extractor article=3091 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0166 err=-
+2026-05-28 16:14:14,191 INFO extract.claim_extractor article=3105 claims=0 tickers=0 sectors=1 tags=2 cost_usd=0.0320 err=-
+2026-05-28 16:14:41,782 INFO extract.claim_extractor article=3099 claims=0 tickers=0 sectors=1 tags=1 cost_usd=0.0233 err=-
+2026-05-28 16:16:01,909 INFO extract.claim_extractor article=3042 claims=0 tickers=5 sectors=2 tags=2 cost_usd=0.0599 err=-
+2026-05-28 16:16:26,635 INFO extract.claim_extractor article=3094 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0217 err=-
+2026-05-28 16:16:47,178 INFO extract.claim_extractor article=3093 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0186 err=-
+2026-05-28 16:17:14,203 INFO extract.claim_extractor article=3098 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0222 err=-
+2026-05-28 16:17:45,180 INFO extract.claim_extractor article=3040 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0268 err=-
+2026-05-28 16:18:07,153 INFO extract.claim_extractor article=3038 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0199 err=-
+2026-05-28 16:18:30,952 INFO extract.claim_extractor article=3095 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0203 err=-
+2026-05-28 16:18:54,660 INFO extract.claim_extractor article=3033 claims=0 tickers=1 sectors=2 tags=0 cost_usd=0.0200 err=-
+2026-05-28 16:19:33,572 INFO extract.claim_extractor article=3039 claims=0 tickers=0 sectors=1 tags=2 cost_usd=0.0327 err=-
+2026-05-28 16:19:52,424 INFO extract.claim_extractor article=3101 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0174 err=-
+2026-05-28 16:21:52,665 ERROR extract.claim_extractor claude failed for article 3049
+Traceback (most recent call last):
+  File "D:\claude_code\news-credibility\backend\extract\claim_extractor.py", line 660, in extract_claims_for_article
+    envelope = _run_claude(SYSTEM_PROMPT, _format_user_input(article), OUTPUT_SCHEMA)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\claude_code\news-credibility\backend\extract\claim_extractor.py", line 606, in _run_claude
+    proc = subprocess.run(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\hfkuo\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hfkuo\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hfkuo\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 1630, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['claude', '-p', '--model', 'haiku', '--system-prompt-file', 'C:\\Users\\hfkuo\\AppData\\Local\\Temp\\tmpcvph7tzl.txt', '--json-schema', '{"type":"object","additionalProperties":false,"properties":{"claims":{"type":"array","description":"Zero or more forward-looking market-verifiable claims. Empty for pure-report articles.","items":{"type":"object","additionalProperties":false,"properties":{"type":{"type":"string","enum":["analyst_target","macro","stock_event"]},"ticker":{"type":"string"},"topic":{"type":"string"},"predicted_value":{"type":"number"},"predicted_text":{"type":"string"},"deadline_iso":{"type":"string"},"raw_text":{"type":"string"},"confidence":{"type":"number"}},"required":["type","raw_text","confidence"]}},"meta":{"type":"object","description":"Whole-article metadata. Filled for every article including 0-claim ones.","additionalProperties":false,"properties":{"overall_sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"event_type":{"type":"string","enum":["earnings","m_and_a","regulatory","exec_change","product_launch","macro_release","market_summary","opinion","lawsuit","guidance","other"]},"article_quality":{"type":"number","description":"0..1. 1=original reporting with quotes/data; 0=bot rephrase of another wire."},"is_breaking":{"type":"boolean"},"tickers":{"type":"array","description":"All tickers explicitly mentioned (max 20). Use canonical symbols (AAPL, 2330.TW).","items":{"type":"object","additionalProperties":false,"properties":{"ticker":{"type":"string"},"sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"is_primary":{"type":"boolean","description":"True if the article is mainly about this company."}},"required":["ticker","sentiment","is_primary"]}},"sectors":{"type":"array","description":"0..5 short sector labels \\u2014 semiconductors, banks, energy, ev, biotech, cloud, retail, ai, crypto, real_estate, defense, consumer, healthcare, autos, telecom, media, materials, industrials, etc.","items":{"type":"string"}},"narrative_tags":{"type":"array","description":"0..5 short narrative tags \\u2014 e.g. \'ai_demand\', \'rate_cuts\', \'china_slowdown\', \'soft_landing\', \'earnings_recession\'. snake_case.","items":{"type":"string"}}},"required":["overall_sentiment","event_type","article_quality","is_breaking","tickers","sectors","narrative_tags"]}},"required":["claims","meta"]}', '--output-format', 'json', '--tools', '', '--no-session-persistence', '--max-budget-usd', '0.1']' timed out after 120 seconds
+2026-05-28 16:21:52,763 INFO extract.claim_extractor article=3049 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0000 err=Command '['claude', '-p', '--model', 'haiku', '--system-prompt-file', 'C:\\Users\\hfkuo\\AppData\\Local\\Temp\\tmpcvph7tzl.txt', '--json-schema', '{"type":"object","additionalProperties":false,"properties":{"claims":{"type":"array","description":"Zero or more forward-looking market-verifiable claims. Empty for pure-report articles.","items":{"type":"object","additionalProperties":false,"properties":{"type":{"type":"string","enum":["analyst_target","macro","stock_event"]},"ticker":{"type":"string"},"topic":{"type":"string"},"predicted_value":{"type":"number"},"predicted_text":{"type":"string"},"deadline_iso":{"type":"string"},"raw_text":{"type":"string"},"confidence":{"type":"number"}},"required":["type","raw_text","confidence"]}},"meta":{"type":"object","description":"Whole-article metadata. Filled for every article including 0-claim ones.","additionalProperties":false,"properties":{"overall_sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"event_type":{"type":"string","enum":["earnings","m_and_a","regulatory","exec_change","product_launch","macro_release","market_summary","opinion","lawsuit","guidance","other"]},"article_quality":{"type":"number","description":"0..1. 1=original reporting with quotes/data; 0=bot rephrase of another wire."},"is_breaking":{"type":"boolean"},"tickers":{"type":"array","description":"All tickers explicitly mentioned (max 20). Use canonical symbols (AAPL, 2330.TW).","items":{"type":"object","additionalProperties":false,"properties":{"ticker":{"type":"string"},"sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"is_primary":{"type":"boolean","description":"True if the article is mainly about this company."}},"required":["ticker","sentiment","is_primary"]}},"sectors":{"type":"array","description":"0..5 short sector labels \\u2014 semiconductors, banks, energy, ev, biotech, cloud, retail, ai, crypto, real_estate, defense, consumer, healthcare, autos, telecom, media, materials, industrials, etc.","items":{"type":"string"}},"narrative_tags":{"type":"array","description":"0..5 short narrative tags \\u2014 e.g. \'ai_demand\', \'rate_cuts\', \'china_slowdown\', \'soft_landing\', \'earnings_recession\'. snake_case.","items":{"type":"string"}}},"required":["overall_sentiment","event_type","article_quality","is_breaking","tickers","sectors","narrative_tags"]}},"required":["claims","meta"]}', '--output-format', 'json', '--tools', '', '--no-session-persistence', '--max-budget-usd', '0.1']' timed out after 120 seconds
+2026-05-28 16:22:52,924 INFO extract.claim_extractor article=3046 claims=0 tickers=3 sectors=3 tags=2 cost_usd=0.0443 err=-
+2026-05-28 16:24:31,863 INFO extract.claim_extractor article=3045 claims=0 tickers=4 sectors=3 tags=4 cost_usd=0.0744 err=-
+2026-05-28 16:24:55,473 INFO extract.claim_extractor article=3100 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0201 err=-
+2026-05-28 16:25:19,433 INFO extract.claim_extractor article=3027 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0192 err=-
+2026-05-28 16:25:58,919 INFO extract.claim_extractor article=3108 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0301 err=-
+2026-05-28 16:26:46,495 INFO extract.claim_extractor article=3022 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0353 err=-
+2026-05-28 16:27:02,769 INFO extract.claim_extractor article=3107 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0171 err=-
+2026-05-28 16:27:21,734 INFO extract.claim_extractor article=3021 claims=0 tickers=0 sectors=1 tags=0 cost_usd=0.0177 err=-
+2026-05-28 16:28:32,767 INFO extract.claim_extractor article=3047 claims=1 tickers=4 sectors=3 tags=1 cost_usd=0.0582 err=-
+2026-05-28 16:29:14,069 INFO extract.claim_extractor article=3043 claims=0 tickers=0 sectors=3 tags=3 cost_usd=0.0343 err=-
+2026-05-28 16:29:49,538 INFO extract.claim_extractor article=2991 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0276 err=-
+2026-05-28 16:30:11,070 INFO extract.claim_extractor article=3104 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0182 err=-
+2026-05-28 16:30:31,135 INFO extract.claim_extractor article=3028 claims=0 tickers=1 sectors=3 tags=1 cost_usd=0.0192 err=-
+2026-05-28 16:30:51,950 INFO extract.claim_extractor article=3106 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0176 err=-
+2026-05-28 16:32:24,185 INFO extract.claim_extractor article=2990 claims=1 tickers=7 sectors=2 tags=1 cost_usd=0.0724 err=-
+2026-05-28 16:32:46,633 INFO extract.claim_extractor article=3025 claims=0 tickers=0 sectors=1 tags=2 cost_usd=0.0195 err=-
+2026-05-28 16:33:20,929 INFO extract.claim_extractor article=2992 claims=0 tickers=1 sectors=3 tags=2 cost_usd=0.0223 err=-
+2026-05-28 16:34:38,017 INFO extract.claim_extractor article=3048 claims=0 tickers=1 sectors=3 tags=2 cost_usd=0.0577 err=-
+2026-05-28 16:35:10,579 INFO extract.claim_extractor article=3034 claims=0 tickers=2 sectors=3 tags=0 cost_usd=0.0278 err=-
+2026-05-28 16:35:47,757 INFO extract.claim_extractor article=2957 claims=0 tickers=2 sectors=2 tags=0 cost_usd=0.0267 err=-
+2026-05-28 16:36:10,035 INFO extract.claim_extractor article=3102 claims=0 tickers=2 sectors=1 tags=0 cost_usd=0.0196 err=-
+2026-05-28 16:36:34,264 INFO extract.claim_extractor article=3035 claims=0 tickers=1 sectors=3 tags=2 cost_usd=0.0218 err=-
+2026-05-28 16:36:51,221 INFO extract.claim_extractor article=3023 claims=0 tickers=0 sectors=1 tags=0 cost_usd=0.0143 err=-
+2026-05-28 16:37:17,267 INFO extract.claim_extractor article=2985 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0229 err=-
+2026-05-28 16:37:37,849 INFO extract.claim_extractor article=3024 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0188 err=-
+2026-05-28 16:38:35,509 INFO extract.claim_extractor article=2958 claims=0 tickers=1 sectors=3 tags=3 cost_usd=0.0438 err=-
+2026-05-28 16:38:59,500 INFO extract.claim_extractor article=3026 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0196 err=-
+2026-05-28 16:39:17,397 INFO extract.claim_extractor article=3032 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0181 err=-
+2026-05-28 16:41:01,961 INFO extract.claim_extractor article=2955 claims=0 tickers=1 sectors=2 tags=2 cost_usd=0.0746 err=-
+2026-05-28 16:42:18,004 INFO extract.claim_extractor article=2954 claims=1 tickers=3 sectors=3 tags=3 cost_usd=0.0606 err=-
+2026-05-28 16:43:03,010 INFO extract.claim_extractor article=2959 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0343 err=-
+2026-05-28 16:43:28,004 INFO extract.claim_extractor article=2986 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0220 err=-
+2026-05-28 16:45:13,274 INFO extract.claim_extractor article=2956 claims=1 tickers=1 sectors=3 tags=1 cost_usd=0.0756 err=-
+2026-05-28 16:45:41,141 INFO extract.claim_extractor article=2943 claims=0 tickers=2 sectors=2 tags=2 cost_usd=0.0229 err=-
+2026-05-28 16:45:58,227 INFO extract.claim_extractor article=2950 claims=0 tickers=0 sectors=1 tags=1 cost_usd=0.0163 err=-
+2026-05-28 16:46:54,174 INFO extract.claim_extractor article=3110 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0414 err=-
+2026-05-28 16:47:22,183 INFO extract.claim_extractor article=3111 claims=0 tickers=0 sectors=0 tags=2 cost_usd=0.0226 err=-
+2026-05-28 16:47:43,998 INFO extract.claim_extractor article=2942 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0183 err=-
+2026-05-28 16:48:11,262 INFO extract.claim_extractor article=2949 claims=0 tickers=1 sectors=1 tags=2 cost_usd=0.0226 err=-
+2026-05-28 16:48:38,135 INFO extract.claim_extractor article=2987 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0231 err=-
+2026-05-28 16:49:52,117 INFO extract.claim_extractor article=2961 claims=0 tickers=10 sectors=4 tags=1 cost_usd=0.0586 err=-
+2026-05-28 16:50:35,564 INFO extract.claim_extractor article=2953 claims=1 tickers=1 sectors=2 tags=1 cost_usd=0.0348 err=-
+2026-05-28 16:51:38,220 INFO extract.claim_extractor article=2919 claims=0 tickers=8 sectors=2 tags=2 cost_usd=0.0523 err=-
+2026-05-28 16:52:31,784 INFO extract.claim_extractor article=2914 claims=0 tickers=1 sectors=2 tags=3 cost_usd=0.0405 err=-
+2026-05-28 16:53:54,620 INFO extract.claim_extractor article=2920 claims=0 tickers=3 sectors=1 tags=1 cost_usd=0.0641 err=-
+2026-05-28 16:54:18,442 INFO extract.claim_extractor article=2984 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0210 err=-
+2026-05-28 16:54:47,320 INFO extract.claim_extractor article=2946 claims=0 tickers=0 sectors=1 tags=0 cost_usd=0.0245 err=-
+2026-05-28 16:55:02,315 INFO extract.claim_extractor article=2948 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0146 err=-
+2026-05-28 16:55:41,239 INFO extract.claim_extractor article=2960 claims=0 tickers=3 sectors=0 tags=2 cost_usd=0.0317 err=-
+2026-05-28 16:56:36,530 INFO extract.claim_extractor article=2916 claims=0 tickers=0 sectors=0 tags=3 cost_usd=0.0417 err=-
+2026-05-28 16:57:03,953 INFO extract.claim_extractor article=2892 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0190 err=-
+2026-05-28 16:59:04,185 ERROR extract.claim_extractor claude failed for article 2911
+Traceback (most recent call last):
+  File "D:\claude_code\news-credibility\backend\extract\claim_extractor.py", line 660, in extract_claims_for_article
+    envelope = _run_claude(SYSTEM_PROMPT, _format_user_input(article), OUTPUT_SCHEMA)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\claude_code\news-credibility\backend\extract\claim_extractor.py", line 606, in _run_claude
+    proc = subprocess.run(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\hfkuo\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hfkuo\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hfkuo\AppData\Local\Programs\Python\Python311\Lib\subprocess.py", line 1630, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['claude', '-p', '--model', 'haiku', '--system-prompt-file', 'C:\\Users\\hfkuo\\AppData\\Local\\Temp\\tmp7vn0l9kw.txt', '--json-schema', '{"type":"object","additionalProperties":false,"properties":{"claims":{"type":"array","description":"Zero or more forward-looking market-verifiable claims. Empty for pure-report articles.","items":{"type":"object","additionalProperties":false,"properties":{"type":{"type":"string","enum":["analyst_target","macro","stock_event"]},"ticker":{"type":"string"},"topic":{"type":"string"},"predicted_value":{"type":"number"},"predicted_text":{"type":"string"},"deadline_iso":{"type":"string"},"raw_text":{"type":"string"},"confidence":{"type":"number"}},"required":["type","raw_text","confidence"]}},"meta":{"type":"object","description":"Whole-article metadata. Filled for every article including 0-claim ones.","additionalProperties":false,"properties":{"overall_sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"event_type":{"type":"string","enum":["earnings","m_and_a","regulatory","exec_change","product_launch","macro_release","market_summary","opinion","lawsuit","guidance","other"]},"article_quality":{"type":"number","description":"0..1. 1=original reporting with quotes/data; 0=bot rephrase of another wire."},"is_breaking":{"type":"boolean"},"tickers":{"type":"array","description":"All tickers explicitly mentioned (max 20). Use canonical symbols (AAPL, 2330.TW).","items":{"type":"object","additionalProperties":false,"properties":{"ticker":{"type":"string"},"sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"is_primary":{"type":"boolean","description":"True if the article is mainly about this company."}},"required":["ticker","sentiment","is_primary"]}},"sectors":{"type":"array","description":"0..5 short sector labels \\u2014 semiconductors, banks, energy, ev, biotech, cloud, retail, ai, crypto, real_estate, defense, consumer, healthcare, autos, telecom, media, materials, industrials, etc.","items":{"type":"string"}},"narrative_tags":{"type":"array","description":"0..5 short narrative tags \\u2014 e.g. \'ai_demand\', \'rate_cuts\', \'china_slowdown\', \'soft_landing\', \'earnings_recession\'. snake_case.","items":{"type":"string"}}},"required":["overall_sentiment","event_type","article_quality","is_breaking","tickers","sectors","narrative_tags"]}},"required":["claims","meta"]}', '--output-format', 'json', '--tools', '', '--no-session-persistence', '--max-budget-usd', '0.1']' timed out after 120 seconds
+2026-05-28 16:59:04,273 INFO extract.claim_extractor article=2911 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0000 err=Command '['claude', '-p', '--model', 'haiku', '--system-prompt-file', 'C:\\Users\\hfkuo\\AppData\\Local\\Temp\\tmp7vn0l9kw.txt', '--json-schema', '{"type":"object","additionalProperties":false,"properties":{"claims":{"type":"array","description":"Zero or more forward-looking market-verifiable claims. Empty for pure-report articles.","items":{"type":"object","additionalProperties":false,"properties":{"type":{"type":"string","enum":["analyst_target","macro","stock_event"]},"ticker":{"type":"string"},"topic":{"type":"string"},"predicted_value":{"type":"number"},"predicted_text":{"type":"string"},"deadline_iso":{"type":"string"},"raw_text":{"type":"string"},"confidence":{"type":"number"}},"required":["type","raw_text","confidence"]}},"meta":{"type":"object","description":"Whole-article metadata. Filled for every article including 0-claim ones.","additionalProperties":false,"properties":{"overall_sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"event_type":{"type":"string","enum":["earnings","m_and_a","regulatory","exec_change","product_launch","macro_release","market_summary","opinion","lawsuit","guidance","other"]},"article_quality":{"type":"number","description":"0..1. 1=original reporting with quotes/data; 0=bot rephrase of another wire."},"is_breaking":{"type":"boolean"},"tickers":{"type":"array","description":"All tickers explicitly mentioned (max 20). Use canonical symbols (AAPL, 2330.TW).","items":{"type":"object","additionalProperties":false,"properties":{"ticker":{"type":"string"},"sentiment":{"type":"string","enum":["bullish","bearish","neutral","mixed"]},"is_primary":{"type":"boolean","description":"True if the article is mainly about this company."}},"required":["ticker","sentiment","is_primary"]}},"sectors":{"type":"array","description":"0..5 short sector labels \\u2014 semiconductors, banks, energy, ev, biotech, cloud, retail, ai, crypto, real_estate, defense, consumer, healthcare, autos, telecom, media, materials, industrials, etc.","items":{"type":"string"}},"narrative_tags":{"type":"array","description":"0..5 short narrative tags \\u2014 e.g. \'ai_demand\', \'rate_cuts\', \'china_slowdown\', \'soft_landing\', \'earnings_recession\'. snake_case.","items":{"type":"string"}}},"required":["overall_sentiment","event_type","article_quality","is_breaking","tickers","sectors","narrative_tags"]}},"required":["claims","meta"]}', '--output-format', 'json', '--tools', '', '--no-session-persistence', '--max-budget-usd', '0.1']' timed out after 120 seconds
+2026-05-28 16:59:21,567 INFO extract.claim_extractor article=2902 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0171 err=-
+2026-05-28 17:01:21,652 INFO extract.claim_extractor article=2918 claims=1 tickers=20 sectors=8 tags=4 cost_usd=0.0949 err=-
+2026-05-28 17:01:44,025 INFO extract.claim_extractor article=2891 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0196 err=-
+2026-05-28 17:02:18,990 INFO extract.claim_extractor article=2913 claims=0 tickers=0 sectors=2 tags=2 cost_usd=0.0262 err=-
+2026-05-28 17:02:40,326 INFO extract.claim_extractor article=2894 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0181 err=-
+2026-05-28 17:03:06,172 INFO extract.claim_extractor article=3037 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0218 err=-
+2026-05-28 17:03:22,880 INFO extract.claim_extractor article=2889 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0159 err=-
+2026-05-28 17:03:46,839 INFO extract.claim_extractor article=3030 claims=0 tickers=0 sectors=2 tags=0 cost_usd=0.0211 err=-
+2026-05-28 17:04:17,887 INFO extract.claim_extractor article=2890 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0253 err=-
+2026-05-28 17:05:13,620 INFO extract.claim_extractor article=2915 claims=0 tickers=0 sectors=1 tags=2 cost_usd=0.0405 err=-
+2026-05-28 17:05:34,685 INFO extract.claim_extractor article=2907 claims=0 tickers=1 sectors=2 tags=2 cost_usd=0.0174 err=-
+2026-05-28 17:05:52,490 INFO extract.claim_extractor article=2898 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0163 err=-
+2026-05-28 17:06:10,300 INFO extract.claim_extractor article=2895 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0161 err=-
+2026-05-28 17:06:46,407 INFO extract.claim_extractor article=2912 claims=0 tickers=4 sectors=2 tags=2 cost_usd=0.0289 err=-
+2026-05-28 17:07:28,695 INFO extract.claim_extractor article=2925 claims=1 tickers=1 sectors=1 tags=0 cost_usd=0.0324 err=-
+2026-05-28 17:07:51,630 INFO extract.claim_extractor article=2905 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0196 err=-
+2026-05-28 17:09:11,415 INFO extract.claim_extractor article=2917 claims=1 tickers=1 sectors=0 tags=0 cost_usd=0.0582 err=-
+2026-05-28 17:09:45,158 INFO extract.claim_extractor article=2945 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0248 err=-
+2026-05-28 17:10:01,269 INFO extract.claim_extractor article=2988 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0149 err=-
+2026-05-28 17:10:18,528 INFO extract.claim_extractor article=2929 claims=0 tickers=3 sectors=3 tags=0 cost_usd=0.0178 err=-
+2026-05-28 17:10:38,121 INFO extract.claim_extractor article=2901 claims=0 tickers=1 sectors=1 tags=0 cost_usd=0.0170 err=-
+2026-05-28 17:11:01,671 INFO extract.claim_extractor article=2837 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0203 err=-
+2026-05-28 17:11:33,853 INFO extract.claim_extractor article=2809 claims=0 tickers=0 sectors=1 tags=1 cost_usd=0.0275 err=-
+2026-05-28 17:12:19,629 INFO extract.claim_extractor article=2896 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0329 err=-
+2026-05-28 17:13:14,536 INFO extract.claim_extractor article=2834 claims=0 tickers=0 sectors=1 tags=1 cost_usd=0.0390 err=-
+2026-05-28 17:13:50,211 INFO extract.claim_extractor article=2851 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0292 err=-
+2026-05-28 17:14:52,756 INFO extract.claim_extractor article=2863 claims=0 tickers=5 sectors=4 tags=0 cost_usd=0.0492 err=-
+2026-05-28 17:15:33,207 INFO extract.claim_extractor article=2857 claims=0 tickers=1 sectors=2 tags=2 cost_usd=0.0303 err=-
+2026-05-28 17:16:27,642 INFO extract.claim_extractor article=2869 claims=0 tickers=2 sectors=1 tags=0 cost_usd=0.0398 err=-
+2026-05-28 17:17:54,547 INFO extract.claim_extractor article=2875 claims=0 tickers=2 sectors=2 tags=2 cost_usd=0.0630 err=-
+2026-05-28 17:18:26,439 INFO extract.claim_extractor article=2878 claims=0 tickers=3 sectors=2 tags=3 cost_usd=0.0275 err=-
+2026-05-28 17:18:41,543 INFO extract.claim_extractor article=2903 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0135 err=-
+2026-05-28 17:20:37,979 INFO extract.claim_extractor article=2880 claims=2 tickers=1 sectors=1 tags=2 cost_usd=0.0896 err=-
+2026-05-28 17:21:11,958 INFO extract.claim_extractor article=2883 claims=0 tickers=1 sectors=0 tags=0 cost_usd=0.0265 err=-
+2026-05-28 17:22:51,720 INFO extract.claim_extractor article=2887 claims=1 tickers=1 sectors=2 tags=1 cost_usd=0.0756 err=-
+2026-05-28 17:23:32,960 INFO extract.claim_extractor article=2888 claims=0 tickers=1 sectors=1 tags=2 cost_usd=0.0359 err=-
+2026-05-28 17:24:25,768 INFO extract.claim_extractor article=2853 claims=0 tickers=2 sectors=2 tags=2 cost_usd=0.0400 err=-
+2026-05-28 17:24:56,252 INFO extract.claim_extractor article=2854 claims=0 tickers=0 sectors=1 tags=0 cost_usd=0.0265 err=-
+2026-05-28 17:25:29,498 INFO extract.claim_extractor article=2855 claims=1 tickers=1 sectors=1 tags=0 cost_usd=0.0252 err=-
+2026-05-28 17:26:03,254 INFO extract.claim_extractor article=2858 claims=0 tickers=0 sectors=2 tags=3 cost_usd=0.0276 err=-
+2026-05-28 17:27:23,732 INFO extract.claim_extractor article=2836 claims=1 tickers=20 sectors=2 tags=1 cost_usd=0.0754 err=-
+2026-05-28 17:28:08,671 INFO extract.claim_extractor article=2835 claims=0 tickers=1 sectors=2 tags=0 cost_usd=0.0321 err=-
+2026-05-28 17:28:54,853 INFO extract.claim_extractor article=2860 claims=0 tickers=2 sectors=2 tags=0 cost_usd=0.0301 err=-
+2026-05-28 17:30:01,781 INFO extract.claim_extractor article=2852 claims=0 tickers=2 sectors=1 tags=2 cost_usd=0.0492 err=-
+2026-05-28 17:30:27,125 INFO extract.claim_extractor article=2944 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0208 err=-
+2026-05-28 17:31:13,399 INFO extract.claim_extractor article=2989 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0345 err=-
+2026-05-28 17:32:02,209 INFO extract.claim_extractor article=2899 claims=0 tickers=0 sectors=1 tags=1 cost_usd=0.0344 err=-
+2026-05-28 17:32:47,487 INFO extract.claim_extractor article=2864 claims=0 tickers=2 sectors=1 tags=0 cost_usd=0.0312 err=-
+2026-05-28 17:33:17,055 INFO extract.claim_extractor article=2806 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0239 err=-
+2026-05-28 17:33:36,788 INFO extract.claim_extractor article=2906 claims=0 tickers=0 sectors=1 tags=2 cost_usd=0.0173 err=-
+2026-05-28 17:33:59,089 INFO extract.claim_extractor article=2807 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0198 err=-
+2026-05-28 17:34:34,990 INFO extract.claim_extractor article=2909 claims=0 tickers=0 sectors=2 tags=0 cost_usd=0.0257 err=-
+2026-05-28 17:35:20,626 INFO extract.claim_extractor article=2843 claims=0 tickers=9 sectors=1 tags=2 cost_usd=0.0410 err=-
+2026-05-28 17:36:01,272 INFO extract.claim_extractor article=2893 claims=0 tickers=0 sectors=1 tags=0 cost_usd=0.0306 err=-
+2026-05-28 17:36:20,606 INFO extract.claim_extractor article=2900 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0177 err=-
+2026-05-28 17:37:16,700 INFO extract.claim_extractor article=2819 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0409 err=-
+2026-05-28 17:38:35,978 INFO extract.claim_extractor article=2865 claims=2 tickers=2 sectors=2 tags=2 cost_usd=0.0657 err=-
+2026-05-28 17:39:02,864 INFO extract.claim_extractor article=2814 claims=0 tickers=0 sectors=3 tags=1 cost_usd=0.0241 err=-
+2026-05-28 17:39:41,628 INFO extract.claim_extractor article=2841 claims=0 tickers=3 sectors=3 tags=3 cost_usd=0.0334 err=-
+2026-05-28 17:40:55,492 INFO extract.claim_extractor article=2839 claims=1 tickers=1 sectors=1 tags=2 cost_usd=0.0598 err=-
+2026-05-28 17:41:25,035 INFO extract.claim_extractor article=2817 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0243 err=-
+2026-05-28 17:41:46,084 INFO extract.claim_extractor article=2866 claims=0 tickers=1 sectors=2 tags=2 cost_usd=0.0181 err=-
+2026-05-28 17:42:09,228 INFO extract.claim_extractor article=2897 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0193 err=-
+2026-05-28 17:42:47,722 INFO extract.claim_extractor article=2870 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0311 err=-
+2026-05-28 17:43:27,271 INFO extract.claim_extractor article=2871 claims=0 tickers=2 sectors=1 tags=1 cost_usd=0.0328 err=-
+2026-05-28 17:44:24,511 INFO extract.claim_extractor article=2845 claims=3 tickers=13 sectors=5 tags=3 cost_usd=0.0551 err=-
+2026-05-28 17:45:22,522 INFO extract.claim_extractor article=2838 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0422 err=-
+2026-05-28 17:45:59,886 INFO extract.claim_extractor article=3029 claims=0 tickers=1 sectors=0 tags=0 cost_usd=0.0284 err=-
+2026-05-28 17:46:21,047 INFO extract.claim_extractor article=2827 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0179 err=-
+2026-05-28 17:46:51,666 INFO extract.claim_extractor article=2829 claims=0 tickers=1 sectors=1 tags=0 cost_usd=0.0250 err=-
+2026-05-28 17:47:12,152 INFO extract.claim_extractor article=2815 claims=0 tickers=1 sectors=1 tags=0 cost_usd=0.0182 err=-
+2026-05-28 17:47:37,008 INFO extract.claim_extractor article=2811 claims=0 tickers=1 sectors=2 tags=0 cost_usd=0.0225 err=-
+2026-05-28 17:48:13,285 INFO extract.claim_extractor article=2846 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0316 err=-
+2026-05-28 17:49:00,194 INFO extract.claim_extractor article=2849 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0357 err=-
+2026-05-28 17:49:16,968 INFO extract.claim_extractor article=2823 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0157 err=-
+2026-05-28 17:49:59,884 INFO extract.claim_extractor article=2804 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0328 err=-
+2026-05-28 17:50:30,275 INFO extract.claim_extractor article=2803 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0271 err=-
+2026-05-28 17:50:52,754 INFO extract.claim_extractor article=2808 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0215 err=-
+2026-05-28 17:51:28,643 INFO extract.claim_extractor article=2847 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0293 err=-
+2026-05-28 17:52:06,188 INFO extract.claim_extractor article=2872 claims=0 tickers=3 sectors=2 tags=2 cost_usd=0.0327 err=-
+2026-05-28 17:52:37,726 INFO extract.claim_extractor article=2842 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0247 err=-
+2026-05-28 17:53:22,722 INFO extract.claim_extractor article=2840 claims=0 tickers=9 sectors=4 tags=1 cost_usd=0.0374 err=-
+2026-05-28 17:53:41,467 INFO extract.claim_extractor article=2812 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0175 err=-
+2026-05-28 17:53:59,957 INFO extract.claim_extractor article=2805 claims=0 tickers=1 sectors=2 tags=1 cost_usd=0.0175 err=-
+2026-05-28 17:54:48,927 INFO extract.claim_extractor article=2844 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0385 err=-
+2026-05-28 17:55:27,376 INFO extract.claim_extractor article=2867 claims=0 tickers=2 sectors=1 tags=0 cost_usd=0.0307 err=-
+2026-05-28 17:56:52,412 ERROR extract.claim_extractor claude failed for article 2850
+Traceback (most recent call last):
+  File "D:\claude_code\news-credibility\backend\extract\claim_extractor.py", line 660, in extract_claims_for_article
+    envelope = _run_claude(SYSTEM_PROMPT, _format_user_input(article), OUTPUT_SCHEMA)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\claude_code\news-credibility\backend\extract\claim_extractor.py", line 630, in _run_claude
+    raise RuntimeError(f"claude exited {proc.returncode}: {proc.stderr[:500]}")
+RuntimeError: claude exited 1: 
+2026-05-28 17:56:52,513 INFO extract.claim_extractor article=2850 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0000 err=claude exited 1: 
+2026-05-28 17:57:30,653 INFO extract.claim_extractor article=2750 claims=0 tickers=1 sectors=1 tags=0 cost_usd=0.0287 err=-
+2026-05-28 17:57:58,660 INFO extract.claim_extractor article=2856 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0166 err=-
+2026-05-28 17:58:19,939 INFO extract.claim_extractor article=2862 claims=0 tickers=0 sectors=5 tags=0 cost_usd=0.0188 err=-
+2026-05-28 17:59:03,044 INFO extract.claim_extractor article=2848 claims=0 tickers=0 sectors=1 tags=3 cost_usd=0.0347 err=-
+2026-05-28 17:59:38,215 INFO extract.claim_extractor article=2810 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0254 err=-
+2026-05-28 18:00:12,155 INFO extract.claim_extractor article=2873 claims=0 tickers=1 sectors=0 tags=1 cost_usd=0.0261 err=-
+2026-05-28 18:00:31,143 INFO extract.claim_extractor article=2761 claims=0 tickers=1 sectors=1 tags=1 cost_usd=0.0180 err=-
+2026-05-28 18:01:06,256 INFO extract.claim_extractor article=2766 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0268 err=-
+2026-05-28 18:01:27,056 INFO extract.claim_extractor article=3036 claims=0 tickers=0 sectors=0 tags=1 cost_usd=0.0178 err=-
+2026-05-28 18:01:49,151 INFO extract.claim_extractor article=2816 claims=0 tickers=2 sectors=3 tags=2 cost_usd=0.0200 err=-
+2026-05-28 18:02:28,814 INFO extract.claim_extractor article=2771 claims=0 tickers=5 sectors=2 tags=2 cost_usd=0.0300 err=-
+2026-05-28 18:03:20,136 INFO extract.claim_extractor article=2776 claims=0 tickers=4 sectors=4 tags=0 cost_usd=0.0436 err=-
+2026-05-28 18:03:42,493 INFO extract.claim_extractor article=2910 claims=0 tickers=0 sectors=2 tags=2 cost_usd=0.0219 err=-
+2026-05-28 18:04:12,032 INFO extract.claim_extractor article=2763 claims=0 tickers=1 sectors=1 tags=0 cost_usd=0.0223 err=-
+2026-05-28 18:05:11,611 INFO extract.claim_extractor article=2762 claims=0 tickers=6 sectors=4 tags=0 cost_usd=0.0469 err=-
+2026-05-28 18:05:32,788 INFO extract.claim_extractor article=2737 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0193 err=-
+2026-05-28 18:06:18,589 INFO extract.claim_extractor article=2781 claims=0 tickers=1 sectors=1 tags=0 cost_usd=0.0381 err=-
+2026-05-28 18:07:01,983 INFO extract.claim_extractor article=2786 claims=3 tickers=4 sectors=3 tags=2 cost_usd=0.0443 err=-
+2026-05-28 18:07:55,144 INFO extract.claim_extractor article=2791 claims=0 tickers=2 sectors=1 tags=0 cost_usd=0.0435 err=-
+2026-05-28 18:08:46,602 INFO extract.claim_extractor article=2757 claims=0 tickers=0 sectors=0 tags=2 cost_usd=0.0411 err=-
+2026-05-28 18:09:37,795 INFO extract.claim_extractor article=2796 claims=0 tickers=3 sectors=2 tags=2 cost_usd=0.0361 err=-
+2026-05-28 18:11:07,921 INFO extract.claim_extractor article=2752 claims=2 tickers=13 sectors=5 tags=1 cost_usd=0.0710 err=-
+2026-05-28 18:11:29,352 INFO extract.claim_extractor article=2764 claims=0 tickers=0 sectors=0 tags=0 cost_usd=0.0193 err=-
+2026-05-28 18:12:12,164 INFO extract.claim_extractor article=2734 claims=0 tickers=0 sectors=2 tags=1 cost_usd=0.0348 err=-
+2026-05-28 18:13:20,017 INFO extract.claim_extractor article=2801 claims=1 tickers=0 sectors=2 tags=0 cost_usd=0.0510 err=-
+2026-05-28 18:13:47,539 INFO extract.claim_extractor article=2832 claims=0 tickers=2 sectors=3 tags=1 cost_usd=0.0240 err=-
+2026-05-28 18:14:27,710 INFO extract.claim_extractor article=2765 claims=0 tickers=9 sectors=2 tags=0 cost_usd=0.0371 err=-
+2026-05-28 18:15:15,318 INFO extract.claim_extractor article=2758 claims=1 tickers=1 sectors=1 tags=0 cost_usd=0.0366 err=-
++--------------------- Traceback (most recent call last) ---------------------+
+| D:\claude_code\news-credibility\backend\tasks\run.py:43 in extract          |
+|                                                                             |
+|   40                                                                        |
+|   41     stats = extract_batch(limit=limit)                                 |
+|   42     total_claims = sum(s.claims_written for s in stats)                |
+| > 43     cache_reads = sum(s.cache_read_tokens for s in stats)              |
+|   44     cache_writes = sum(s.cache_write_tokens for s in stats)            |
+|   45     errors = sum(1 for s in stats if s.error)                          |
+|   46     typer.echo(                                                        |
+|                                                                             |
+| +----------------------- locals ------------------------+                   |
+| |        limit = 200                                    |                   |
+| |        stats = [                                      |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3116,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=0,             |                   |
+| |                        sectors_written=2,             |                   |
+| |                        tags_written=2,                |                   |
+| |                        cost_usd=0.0626391,            |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3113,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=0,             |                   |
+| |                        sectors_written=1,             |                   |
+| |                        tags_written=2,                |                   |
+| |                        cost_usd=0.06401705,           |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3114,               |                   |
+| |                        claims_written=1,              |                   |
+| |                        tickers_written=2,             |                   |
+| |                        sectors_written=2,             |                   |
+| |                        tags_written=2,                |                   |
+| |                        cost_usd=0.05515410000000001,  |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3117,               |                   |
+| |                        claims_written=1,              |                   |
+| |                        tickers_written=0,             |                   |
+| |                        sectors_written=0,             |                   |
+| |                        tags_written=2,                |                   |
+| |                        cost_usd=0.05527445,           |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3119,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=2,             |                   |
+| |                        sectors_written=2,             |                   |
+| |                        tags_written=1,                |                   |
+| |                        cost_usd=0.07425590000000001,  |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3092,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=0,             |                   |
+| |                        sectors_written=2,             |                   |
+| |                        tags_written=2,                |                   |
+| |                        cost_usd=0.01734695,           |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3096,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=1,             |                   |
+| |                        sectors_written=1,             |                   |
+| |                        tags_written=1,                |                   |
+| |                        cost_usd=0.020278400000000002, |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3087,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=0,             |                   |
+| |                        sectors_written=0,             |                   |
+| |                        tags_written=0,                |                   |
+| |                        cost_usd=0.02039285,           |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3118,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=1,             |                   |
+| |                        sectors_written=2,             |                   |
+| |                        tags_written=1,                |                   |
+| |                        cost_usd=0.05721305,           |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ExtractStats(                      |                   |
+| |                        article_id=3112,               |                   |
+| |                        claims_written=0,              |                   |
+| |                        tickers_written=0,             |                   |
+| |                        sectors_written=1,             |                   |
+| |                        tags_written=2,                |                   |
+| |                        cost_usd=0.0265686,            |                   |
+| |                        error=None                     |                   |
+| |                    ),                                 |                   |
+| |                    ... +190                           |                   |
+| |                ]                                      |                   |
+| | total_claims = 28                                     |                   |
+| +-------------------------------------------------------+                   |
+|                                                                             |
+| D:\claude_code\news-credibility\backend\tasks\run.py:43 in <genexpr>        |
+|                                                                             |
+|   40                                                                        |
+|   41     stats = extract_batch(limit=limit)                                 |
+|   42     total_claims = sum(s.claims_written for s in stats)                |
+| > 43     cache_reads = sum(s.cache_read_tokens for s in stats)              |
+|   44     cache_writes = sum(s.cache_write_tokens for s in stats)            |
+|   45     errors = sum(1 for s in stats if s.error)                          |
+|   46     typer.echo(                                                        |
+|                                                                             |
+| +--------------------- locals ----------------------+                       |
+| | .0 = <list_iterator object at 0x0000022172842440> |                       |
+| |  s = ExtractStats(                                |                       |
+| |          article_id=3116,                         |                       |
+| |          claims_written=0,                        |                       |
+| |          tickers_written=0,                       |                       |
+| |          sectors_written=2,                       |                       |
+| |          tags_written=2,                          |                       |
+| |          cost_usd=0.0626391,                      |                       |
+| |          error=None                               |                       |
+| |      )                                            |                       |
+| +---------------------------------------------------+                       |
++-----------------------------------------------------------------------------+
+AttributeError: 'ExtractStats' object has no attribute 'cache_read_tokens'

@@ -16,17 +16,20 @@ class RssSource:
 
 
 SOURCES: tuple[RssSource, ...] = (
-    RssSource(
-        id="reuters",
-        name="Reuters",
-        language="en",
-        # Reuters official feeds redirect to reutersagency.com; community-maintained
-        # mirrors exist but are unstable. Start with the markets wire on Google News
-        # as a fallback — replace with a stable feed if/when available.
-        feeds=(
-            "https://news.google.com/rss/search?q=site:reuters.com+when:1d&hl=en-US&gl=US&ceid=US:en",
-        ),
-    ),
+    # Reuters is DISABLED — left here for reference.
+    # We previously used Google News (`site:reuters.com`) as a fallback because
+    # Reuters' own RSS endpoints (feeds.reuters.com, reuters.com/markets/rss,
+    # reutersagency.com/feed) all return 401/404 as of 2026. Google News only
+    # gives headlines + ~200-char snippets, never article bodies. After
+    # backfilling 97 Reuters articles we measured avg article_quality=0.26 and
+    # claims_per_article=0.01 — well below CNBC (0.66, 0.27) and Yahoo
+    # (0.55, 0.24). The signal is too thin to justify the Claude tokens.
+    # Re-enable when we have a paid feed (NewsAPI Business, Polygon News, etc.)
+    # or a working scraping path that defeats Reuters' Cloudflare gate.
+    #
+    # RssSource(id="reuters", name="Reuters", language="en", feeds=(
+    #     "https://news.google.com/rss/search?q=site:reuters.com+when:1d&hl=en-US&gl=US&ceid=US:en",
+    # )),
     RssSource(
         id="cnbc",
         name="CNBC",

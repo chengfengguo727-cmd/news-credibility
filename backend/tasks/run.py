@@ -34,11 +34,17 @@ def ingest() -> None:
 
 
 @app.command()
-def extract(limit: int = typer.Option(50, help="Max articles to process this run.")) -> None:
+def extract(
+    limit: int = typer.Option(50, help="Max articles to process this run."),
+    include_bodyless: bool = typer.Option(
+        False, "--include-bodyless",
+        help="Also process headline-only articles (body IS NULL). Off by default to avoid wasting tokens.",
+    ),
+) -> None:
     """Run Claude claim extraction on unprocessed articles."""
     from extract.claim_extractor import extract_batch
 
-    stats = extract_batch(limit=limit)
+    stats = extract_batch(limit=limit, include_bodyless=include_bodyless)
     claims = sum(s.claims_written for s in stats)
     tickers = sum(s.tickers_written for s in stats)
     sectors = sum(s.sectors_written for s in stats)

@@ -700,28 +700,29 @@ def extract_claims_for_article(article_id: int, *, force: bool = False) -> Extra
         )
 
 
-def extract_batch(limit: int = 50) -> list[ExtractStats]:
+def extract_batch(limit: int = 50, *, include_bodyless: bool = False) -> list[ExtractStats]:
     """Pick articles that don't yet have an `article_meta` row.
 
-    This naturally picks up both *new* articles and *backfill* (articles that
-    were extracted under the old claim-only schema and lack meta). When meta
-    catches up across the whole corpus, this query starts returning only newly
-    ingested articles.
+    By default, skips articles where `body IS NULL` (headline-only entries
+    like the deprecated Reuters Google-News feed). Extraction quality on
+    those is dismal (avg article_quality ~0.26) and they waste Claude
+    tokens. Pass `include_bodyless=True` to force-process them.
+
+    Order: newest published_at first — backfill the most recent corpus
+    while it's still relevant.
     """
     Session_ = session_factory()
     with Session_() as db:
-        # outer join + filter is portable and works on Supabase Postgres
         meta_subq = select(ArticleMeta.article_id)
-        ids = (
-            db.execute(
-                select(Article.id)
-                .where(~Article.id.in_(meta_subq))
-                .order_by(Article.published_at.desc().nullslast())
-                .limit(limit)
-            )
-            .scalars()
-            .all()
+        stmt = (
+            select(Article.id)
+            .where(~Article.id.in_(meta_subq))
+            .order_by(Article.published_at.desc().nullslast())
+            .limit(limit)
         )
+        if not include_bodyless:
+            stmt = stmt.where(Article.body.is_not(None))
+        ids = db.execute(stmt).scalars().all()
 
     if not ids:
         log.info("no articles needing extraction (meta already present)")

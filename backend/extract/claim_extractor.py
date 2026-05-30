@@ -729,6 +729,8 @@ def extract_batch(limit: int = 50, *, include_bodyless: bool = False) -> list[Ex
         return []
 
     results: list[ExtractStats] = []
+    consecutive_errors = 0
+    EARLY_STOP_THRESHOLD = 15  # ~ subscription rate-limit detection
     for aid in ids:
         s = extract_claims_for_article(aid)
         log.info(
@@ -737,6 +739,17 @@ def extract_batch(limit: int = 50, *, include_bodyless: bool = False) -> list[Ex
             s.tags_written, s.cost_usd, s.error or "-",
         )
         results.append(s)
+        if s.error:
+            consecutive_errors += 1
+            if consecutive_errors >= EARLY_STOP_THRESHOLD:
+                log.warning(
+                    "early-stop: %d consecutive errors — likely subscription rate limit; "
+                    "remaining %d articles deferred.",
+                    consecutive_errors, len(ids) - len(results),
+                )
+                break
+        else:
+            consecutive_errors = 0
     return results
 
 

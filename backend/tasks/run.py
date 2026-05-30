@@ -58,10 +58,22 @@ def extract(
 
 
 @app.command()
-def validate() -> None:
-    """Resolve due claims against market data. (Week 3)"""
-    typer.echo("validate: not implemented yet (Week 3)")
-    raise typer.Exit(code=2)
+def validate(
+    limit: int | None = typer.Option(None, help="Max claims to resolve."),
+    min_confidence: float = typer.Option(0.5, help="Skip claims below this LLM confidence."),
+) -> None:
+    """Resolve past-due claims against yfinance / FRED."""
+    from validate.resolver import validate_due_claims
+
+    results = validate_due_claims(min_confidence=min_confidence, limit=limit)
+    hit = sum(1 for r in results if r.outcome.value == "hit")
+    partial = sum(1 for r in results if r.outcome.value == "partial")
+    miss = sum(1 for r in results if r.outcome.value == "miss")
+    pending = sum(1 for r in results if r.outcome.value == "pending")
+    typer.echo(
+        f"due={len(results)} resolved={hit + partial + miss} "
+        f"hit={hit} partial={partial} miss={miss} pending={pending}"
+    )
 
 
 @app.command()

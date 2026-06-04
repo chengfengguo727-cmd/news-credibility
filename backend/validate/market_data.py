@@ -49,6 +49,57 @@ def us_close(ticker: str, on: date, *, window_days: int = 14) -> float | None:
         return None
 
 
+def earnings_near(
+    ticker: str, on: date, *, window_days: int = 14
+) -> dict | None:
+    """Find the earnings report dated closest to (and ≤) `on`.
+
+    Returns a dict with eps_estimate / reported_eps / surprise_pct,
+    or None if no matching earnings report found (often because yfinance
+    is rate-limited — caller treats None as "pending, try again later").
+
+    `window_days` allows for some slack: a claim with deadline=Q2 end might
+    aim at earnings released slightly before. We also accept earnings
+    released up to `window_days` AFTER `on` because some claims encode
+    the predicted target date approximately.
+    """
+    try:
+        df = yf.Ticker(ticker).get_earnings_dates(limit=12)
+    except Exception as e:
+        log.warning("earnings_near(%s) fetch failed: %s", ticker, e)
+        return None
+    if df is None or df.empty:
+        return None
+
+    # df index = Timestamp of earnings release; columns = ['EPS Estimate', 'Reported EPS', 'Surprise(%)']
+    # We want the row closest to `on`, prioritizing past releases (Reported EPS not NaN).
+    import pandas as pd
+
+    target_ts = pd.Timestamp(on).tz_localize(None)
+    # normalize index to naive timestamps for comparison
+    idx_naive = df.index.tz_localize(None) if df.index.tz is not None else df.index
+
+    deltas = (idx_naive - target_ts).total_seconds() / 86400
+    # Pick the row whose date is within ±window_days, preferring past (negative delta)
+    mask = (deltas >= -90) & (deltas <= window_days)
+    if not mask.any():
+        return None
+    candidate = df[mask].iloc[(deltas[mask]).abs().argsort()[0]]
+
+    def _f(v):
+        try:
+            return float(v) if v is not None and not (isinstance(v, float) and v != v) else None
+        except (TypeError, ValueError):
+            return None
+
+    return {
+        "eps_estimate": _f(candidate.get("EPS Estimate")),
+        "reported_eps": _f(candidate.get("Reported EPS")),
+        "surprise_pct": _f(candidate.get("Surprise(%)")),
+        "report_date": str(candidate.name)[:10],
+    }
+
+
 def fred_value(series: str, on: date, *, lookback_days: int = 90) -> float | None:
     """Latest observation of a FRED series at or before `on`.
 

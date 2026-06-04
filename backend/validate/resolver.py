@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from db.models import Claim, ClaimOutcome, ClaimType, Outcome
 from db.session import session_factory
-from validate.market_data import FRED_SERIES, fred_value, fred_yoy_pct, us_close
+from validate.market_data import FRED_SERIES, earnings_near, fred_value, fred_yoy_pct, us_close
 
 log = logging.getLogger(__name__)
 
@@ -91,12 +91,51 @@ def resolve_macro(claim: Claim) -> tuple[Outcome, float | None, str]:
 
 
 def resolve_stock_event(claim: Claim) -> tuple[Outcome, float | None, str]:
-    """Earnings beat / merger close / product launch.
+    """Earnings beat / miss, merger close, product launch.
 
-    Deferred to a later week — needs SEC EDGAR / company news cross-reference.
-    Always returns pending for now.
+    - `earnings_beat` / `earnings_miss`: validated via yfinance earnings
+      dates. Hit/miss decided by sign of `Surprise(%)` against the
+      prediction direction.
+    - `merger_completion` / `product_launch`: not implemented yet (would
+      need SEC 8-K parsing or product news monitoring).
     """
-    return Outcome.pending, None, "stock_event validation not implemented (Week 4+)"
+    topic = claim.topic or ""
+    if topic in ("earnings_beat", "earnings_miss"):
+        if not claim.ticker or claim.deadline is None:
+            return Outcome.pending, None, "missing ticker/deadline"
+        info = earnings_near(claim.ticker, claim.deadline.date())
+        if info is None:
+            return Outcome.pending, None, "yfinance returned no earnings near deadline"
+        surprise = info.get("surprise_pct")
+        if surprise is None:
+            # earnings hasn't been reported yet, even though deadline passed
+            return Outcome.pending, None, f"no Reported EPS yet (report_date={info.get('report_date')})"
+
+        # We compare the model's DIRECTIONAL call against the actual surprise.
+        # ±2% is a small enough miss to be considered "in line" → partial.
+        BEAT_HIT_THRESHOLD = 2.0
+        IN_LINE_THRESHOLD = 2.0
+        note_base = (
+            f"surprise={surprise:+.2f}% report_date={info.get('report_date')} "
+            f"est={info.get('eps_estimate')} actual={info.get('reported_eps')}"
+        )
+        if topic == "earnings_beat":
+            if surprise >= BEAT_HIT_THRESHOLD:
+                return Outcome.hit, surprise, "beat called, beat happened: " + note_base
+            if surprise >= -IN_LINE_THRESHOLD:
+                return Outcome.partial, surprise, "beat called, came in line: " + note_base
+            return Outcome.miss, surprise, "beat called, missed: " + note_base
+        else:  # earnings_miss
+            if surprise <= -BEAT_HIT_THRESHOLD:
+                return Outcome.hit, surprise, "miss called, missed: " + note_base
+            if surprise <= IN_LINE_THRESHOLD:
+                return Outcome.partial, surprise, "miss called, came in line: " + note_base
+            return Outcome.miss, surprise, "miss called, beat instead: " + note_base
+
+    if topic in ("merger_completion", "product_launch"):
+        return Outcome.pending, None, f"{topic} validation not implemented (needs SEC 8-K / news monitoring)"
+
+    return Outcome.pending, None, f"unknown stock_event topic: {topic}"
 
 
 def resolve_one(claim: Claim) -> tuple[Outcome, float | None, str]:

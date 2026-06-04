@@ -98,7 +98,99 @@ def test_macro_miss_when_more_than_0_5_off(monkeypatch):
 
 # --- resolve_stock_event ---------------------------------------------
 
-def test_stock_event_always_pending_for_now():
-    outcome, _, note = resolver.resolve_stock_event(_claim(type=ClaimType.stock_event))
+def _earnings_event_claim(topic: str, **kw) -> Claim:
+    return _claim(type=ClaimType.stock_event, topic=topic, predicted_text="x", **kw)
+
+
+def test_stock_event_pending_when_no_topic():
+    outcome, _, _ = resolver.resolve_stock_event(
+        _claim(type=ClaimType.stock_event, topic=None)
+    )
     assert outcome == Outcome.pending
-    assert "not implemented" in note.lower()
+
+
+def test_stock_event_pending_when_no_ticker():
+    claim = _earnings_event_claim("earnings_beat", ticker=None)
+    outcome, _, _ = resolver.resolve_stock_event(claim)
+    assert outcome == Outcome.pending
+
+
+def test_stock_event_pending_when_yfinance_empty(monkeypatch):
+    monkeypatch.setattr(resolver, "earnings_near", lambda *a, **kw: None)
+    outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("earnings_beat"))
+    assert outcome == Outcome.pending
+    assert "yfinance" in note
+
+
+def test_stock_event_pending_when_report_not_yet(monkeypatch):
+    """earnings date passed but Yahoo hasn't filled Reported EPS yet."""
+    monkeypatch.setattr(
+        resolver, "earnings_near",
+        lambda *a, **kw: {"eps_estimate": 1.5, "reported_eps": None, "surprise_pct": None,
+                          "report_date": "2026-07-31"},
+    )
+    outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("earnings_beat"))
+    assert outcome == Outcome.pending
+    assert "no Reported EPS" in note
+
+
+def test_earnings_beat_hit_when_strongly_positive(monkeypatch):
+    monkeypatch.setattr(
+        resolver, "earnings_near",
+        lambda *a, **kw: {"eps_estimate": 1.5, "reported_eps": 1.7, "surprise_pct": 13.3, "report_date": "x"},
+    )
+    outcome, actual, _ = resolver.resolve_stock_event(_earnings_event_claim("earnings_beat"))
+    assert outcome == Outcome.hit
+    assert actual == 13.3
+
+
+def test_earnings_beat_partial_when_in_line(monkeypatch):
+    monkeypatch.setattr(
+        resolver, "earnings_near",
+        lambda *a, **kw: {"eps_estimate": 1.5, "reported_eps": 1.51, "surprise_pct": 0.5, "report_date": "x"},
+    )
+    outcome, _, _ = resolver.resolve_stock_event(_earnings_event_claim("earnings_beat"))
+    assert outcome == Outcome.partial
+
+
+def test_earnings_beat_miss_when_negative(monkeypatch):
+    monkeypatch.setattr(
+        resolver, "earnings_near",
+        lambda *a, **kw: {"eps_estimate": 1.5, "reported_eps": 1.2, "surprise_pct": -20.0, "report_date": "x"},
+    )
+    outcome, _, _ = resolver.resolve_stock_event(_earnings_event_claim("earnings_beat"))
+    assert outcome == Outcome.miss
+
+
+def test_earnings_miss_hit_when_strongly_negative(monkeypatch):
+    """Miss called and it happened — the source called it right."""
+    monkeypatch.setattr(
+        resolver, "earnings_near",
+        lambda *a, **kw: {"eps_estimate": 1.5, "reported_eps": 1.2, "surprise_pct": -20.0, "report_date": "x"},
+    )
+    outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("earnings_miss"))
+    assert outcome == Outcome.hit
+    assert "miss called, missed" in note
+
+
+def test_earnings_miss_miss_when_actually_beat(monkeypatch):
+    """Miss called but the company beat — the source called it wrong."""
+    monkeypatch.setattr(
+        resolver, "earnings_near",
+        lambda *a, **kw: {"eps_estimate": 1.5, "reported_eps": 1.8, "surprise_pct": 20.0, "report_date": "x"},
+    )
+    outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("earnings_miss"))
+    assert outcome == Outcome.miss
+    assert "miss called, beat instead" in note
+
+
+def test_stock_event_product_launch_pending():
+    outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("product_launch"))
+    assert outcome == Outcome.pending
+    assert "product_launch" in note
+
+
+def test_stock_event_merger_completion_pending():
+    outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("merger_completion"))
+    assert outcome == Outcome.pending
+    assert "merger_completion" in note

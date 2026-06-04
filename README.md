@@ -4,6 +4,13 @@
 [![Ingest](https://github.com/chengfengguo727-cmd/news-credibility/actions/workflows/ingest.yml/badge.svg)](https://github.com/chengfengguo727-cmd/news-credibility/actions/workflows/ingest.yml)
 
 MVP for tracking how well financial news sources predict the market.
+
+> **👉 [使用說明 (User Manual, 繁中)](使用說明.md)** — how to open the
+> app, what each dashboard column means, how to set up the local
+> scheduler. Read this first if you just want to **use** the system.
+>
+> The rest of this README is the **developer** setup guide.
+
 See [`plans/reuters-bloomberg-prancy-widget.md`](../../Users/hfkuo/.claude/plans/reuters-bloomberg-prancy-widget.md) for the full design.
 
 ## Architecture

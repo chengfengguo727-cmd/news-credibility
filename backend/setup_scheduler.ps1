@@ -28,6 +28,7 @@ $ErrorActionPreference = "Stop"
 $BackendDir = $PSScriptRoot                                  # this script lives in backend/
 $Venv       = Join-Path $BackendDir ".venv\Scripts\python.exe"
 $LogFile    = Join-Path $BackendDir "extract_scheduled.log"
+$Wrapper    = Join-Path $BackendDir "run_extract_logged.ps1"
 
 # --- Uninstall path ---------------------------------------------------
 if ($Uninstall) {
@@ -46,26 +47,23 @@ if (-not (Test-Path $Venv)) {
     throw "venv not found at $Venv`n" +
           "Run first: cd $BackendDir; python -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -r requirements.txt"
 }
+if (-not (Test-Path $Wrapper)) {
+    throw "wrapper script not found at $Wrapper`n" +
+          "Make sure run_extract_logged.ps1 sits next to setup_scheduler.ps1."
+}
 $ClaudeCmd = Get-Command claude -ErrorAction SilentlyContinue
 if (-not $ClaudeCmd) {
     Write-Warning "claude CLI not found on PATH. The task will install but every run will fail."
     Write-Warning "Install Claude Code first, then `claude auth` to log in."
 }
 
-# --- Action: powershell wrapping our pipeline command ----------------
-# We launch powershell.exe with the entire command on a single -Command
-# line. *>> appends every output stream (stdout/stderr/info/verbose) to
-# the log so partial runs are visible.
-$RunCmd = @"
-Set-Location '$BackendDir';
-'[' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + '] === extract --limit $Limit START ===' >> '$LogFile';
-& '$Venv' -m tasks.run extract --limit $Limit *>> '$LogFile';
-'[' + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + "] === END (exit `$LASTEXITCODE) ===" >> '$LogFile'
-"@
-
+# --- Action: invoke the wrapper script ------------------------------
+# Using -File with a real .ps1 dodges all the nested-quote hell of -Command.
+# The wrapper writes its own START/END markers and pipes every stream
+# (stdout/stderr/info/verbose) into the log file.
 $Action = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
-    -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"$RunCmd`""
+    -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Wrapper`" -Limit $Limit"
 
 # --- Trigger: every N minutes, indefinite ---------------------------
 # Start 2 minutes from now so you can verify the install before it fires.

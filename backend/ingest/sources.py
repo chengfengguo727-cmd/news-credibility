@@ -47,6 +47,27 @@ SOURCES: tuple[RssSource, ...] = (
             "https://finance.yahoo.com/news/rssindex",
         ),
     ),
+    # --- Taiwan sources (added Week 4) -----------------------------------
+    # Body extraction confirmed working on both — tested 4118ch / 660ch
+    # respectively. Cnyes / UDN / 工商 / 中時 either 4xx or thin body via
+    # trafilatura; revisit if we get a paid feed.
+    RssSource(
+        id="yahoo_tw",
+        name="Yahoo Finance TW",
+        language="zh-TW",
+        feeds=(
+            "https://tw.stock.yahoo.com/rss",
+            "https://tw.news.yahoo.com/rss/finance",
+        ),
+    ),
+    RssSource(
+        id="ltn",
+        name="自由時報 商業",
+        language="zh-TW",
+        feeds=(
+            "https://news.ltn.com.tw/rss/business.xml",
+        ),
+    ),
 )
 
 

@@ -1,23 +1,28 @@
-"""Market data adapters for Week 3 validation.
+"""Market data adapters for Week 3-4 validation.
 
-- US prices: yfinance (no key needed)
-- Macro: FRED CSV graph endpoint (no key needed; full API would need FRED_API_KEY)
-- Taiwan prices: FinMind (not yet — deferred to Week 4+)
+- US prices / earnings : yfinance (no key needed; flaky — graceful None fallback)
+- Macro                : FRED public CSV endpoint (no key needed)
+- Taiwan prices        : FinMind public daily-price endpoint (no key needed for ≤600 req/h)
+- SEC filings          : data.sec.gov submissions JSON (no key; needs UA with contact)
 
-All fetchers return None on any failure; the caller treats None as "data
-not available" and leaves the claim outcome as `pending` so it'll be
-retried next run.
+All fetchers return None on any failure; the caller treats None as
+"data not available" and leaves the claim outcome `pending` so it'll
+be retried next run.
 """
 
 from __future__ import annotations
 
 import logging
 from datetime import date, timedelta
+from functools import lru_cache
 
 import httpx
 import yfinance as yf
 
 log = logging.getLogger(__name__)
+
+# SEC's policy: requests must carry a real UA with contact info.
+_SEC_UA = "NewsCredibilityBot/0.1 chengfengguo727@gmail.com"
 
 # FRED series IDs we know how to validate against
 FRED_SERIES: dict[str, str] = {
@@ -130,6 +135,111 @@ def fred_value(series: str, on: date, *, lookback_days: int = 90) -> float | Non
     except (httpx.HTTPError, ValueError) as e:
         log.warning("fred_value(%s, %s) failed: %s", series, on, e)
         return None
+
+
+@lru_cache(maxsize=1)
+def _ticker_to_cik() -> dict[str, str]:
+    """Fetch + cache the SEC's ticker→CIK mapping (once per process)."""
+    try:
+        r = httpx.get(
+            "https://www.sec.gov/files/company_tickers.json",
+            headers={"User-Agent": _SEC_UA}, timeout=30,
+        )
+        r.raise_for_status()
+        return {v["ticker"]: str(v["cik_str"]).zfill(10) for v in r.json().values()}
+    except (httpx.HTTPError, ValueError, KeyError) as e:
+        log.warning("ticker→CIK fetch failed: %s", e)
+        return {}
+
+
+def sec_8k_items_near(ticker: str, on: date, *, before_days: int = 30, after_days: int = 90) -> list[str]:
+    """Return the list of distinct 8-K Item codes filed for `ticker` in
+    the window [on - before_days, on + after_days].
+
+    Item 2.01 means "Completion of Acquisition or Disposition of Assets"
+    — that's our merger_completion signal.
+    """
+    cik = _ticker_to_cik().get(ticker)
+    if not cik:
+        return []
+    try:
+        r = httpx.get(
+            f"https://data.sec.gov/submissions/CIK{cik}.json",
+            headers={"User-Agent": _SEC_UA}, timeout=20,
+        )
+        r.raise_for_status()
+        recent = r.json().get("filings", {}).get("recent", {})
+    except (httpx.HTTPError, ValueError) as e:
+        log.warning("SEC submissions fetch failed for %s (%s): %s", ticker, cik, e)
+        return []
+
+    forms = recent.get("form", [])
+    dates = recent.get("filingDate", [])
+    items = recent.get("items", [])
+    if not (forms and dates):
+        return []
+
+    window_start = (on - timedelta(days=before_days)).isoformat()
+    window_end = (on + timedelta(days=after_days)).isoformat()
+    found: set[str] = set()
+    for i, form in enumerate(forms):
+        if form != "8-K":
+            continue
+        d = dates[i] if i < len(dates) else ""
+        if not (window_start <= d <= window_end):
+            continue
+        raw_items = items[i] if i < len(items) else ""
+        # items field is a comma-separated string like "2.02,9.01"
+        for it in (raw_items or "").split(","):
+            it = it.strip()
+            if it:
+                found.add(it)
+    return sorted(found)
+
+
+# Yahoo TW-stock symbol normalization: "2330.TW" -> "2330"
+def _tw_symbol(ticker: str) -> str | None:
+    if ticker.endswith(".TW"):
+        return ticker[:-3]
+    if ticker.isdigit() and 4 <= len(ticker) <= 6:
+        return ticker
+    return None
+
+
+def tw_close(ticker: str, on: date, *, lookback_days: int = 14) -> float | None:
+    """Closing price for a Taiwan-listed stock via FinMind's public endpoint.
+
+    No API key needed for the public TaiwanStockPrice dataset (rate-limited
+    to ~600 req/h). Accepts `2330.TW` or bare `2330`.
+    """
+    sym = _tw_symbol(ticker)
+    if sym is None:
+        return None
+    start = (on - timedelta(days=lookback_days)).isoformat()
+    end = on.isoformat()
+    url = (
+        "https://api.finmindtrade.com/api/v4/data?"
+        f"dataset=TaiwanStockPrice&data_id={sym}&start_date={start}&end_date={end}"
+    )
+    try:
+        r = httpx.get(url, timeout=20)
+        r.raise_for_status()
+        payload = r.json()
+        rows = payload.get("data") or []
+        if not rows:
+            return None
+        # rows ordered ascending by date; pick the most recent close
+        return float(rows[-1]["close"])
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
+        log.warning("tw_close(%s, %s) failed: %s", ticker, on, e)
+        return None
+
+
+def stock_close_any(ticker: str, on: date) -> float | None:
+    """Route to the right backend by ticker shape."""
+    if ".TW" in ticker or _tw_symbol(ticker):
+        return tw_close(ticker, on)
+    return us_close(ticker, on)
 
 
 def fred_yoy_pct(series: str, on: date) -> float | None:

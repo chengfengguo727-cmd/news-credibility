@@ -62,6 +62,8 @@ export type ArticleWithMeta = {
 export const SOURCES = [
   { id: "cnbc", name: "CNBC", language: "en" },
   { id: "yahoo_finance", name: "Yahoo Finance", language: "en" },
+  { id: "yahoo_tw", name: "Yahoo Finance TW", language: "zh-TW" },
+  { id: "ltn", name: "自由時報 商業", language: "zh-TW" },
 ] as const;
 
 // --- Source stats ----------------------------------------------------

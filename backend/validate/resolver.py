@@ -17,14 +17,22 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from db.models import Claim, ClaimOutcome, ClaimType, Outcome
 from db.session import session_factory
-from validate.market_data import FRED_SERIES, earnings_near, fred_value, fred_yoy_pct, us_close
+from validate.market_data import (
+    FRED_SERIES,
+    earnings_near,
+    fred_value,
+    fred_yoy_pct,
+    sec_8k_items_near,
+    stock_close_any,
+    us_close,
+)
 
 log = logging.getLogger(__name__)
 
@@ -51,9 +59,10 @@ def resolve_analyst_target(claim: Claim) -> tuple[Outcome, float | None, str]:
     """Did the stock close near the analyst's price target by the deadline?"""
     if not claim.ticker or claim.predicted_value is None or claim.deadline is None:
         return Outcome.pending, None, "missing ticker/value/deadline"
-    actual = us_close(claim.ticker, claim.deadline.date())
+    # stock_close_any routes US tickers to yfinance, TW tickers to FinMind
+    actual = stock_close_any(claim.ticker, claim.deadline.date())
     if actual is None:
-        return Outcome.pending, None, "yfinance returned no data"
+        return Outcome.pending, None, "no price data (yfinance/FinMind)"
 
     target = claim.predicted_value
     err = (actual - target) / target if target > 0 else 0
@@ -132,10 +141,54 @@ def resolve_stock_event(claim: Claim) -> tuple[Outcome, float | None, str]:
                 return Outcome.partial, surprise, "miss called, came in line: " + note_base
             return Outcome.miss, surprise, "miss called, beat instead: " + note_base
 
-    if topic in ("merger_completion", "product_launch"):
-        return Outcome.pending, None, f"{topic} validation not implemented (needs SEC 8-K / news monitoring)"
-
+    if topic == "merger_completion":
+        return _resolve_merger(claim)
+    if topic == "product_launch":
+        return _resolve_product_launch(claim)
     return Outcome.pending, None, f"unknown stock_event topic: {topic}"
+
+
+def _resolve_merger(claim: Claim) -> tuple[Outcome, float | None, str]:
+    """Did the company file an 8-K Item 2.01 (Completion of Acquisition) in the window?"""
+    if not claim.ticker or claim.deadline is None:
+        return Outcome.pending, None, "missing ticker/deadline"
+    items = sec_8k_items_near(claim.ticker, claim.deadline.date())
+    if not items:
+        # Two cases: no filings at all (still possible the merger isn't through),
+        # or our fetch failed. Stay pending and let next run retry.
+        return Outcome.pending, None, "no 8-K filings in window (or SEC fetch failed)"
+    note = f"8-K items in window: {','.join(items)}"
+    if "2.01" in items:
+        return Outcome.hit, None, "merger called, 8-K 2.01 filed: " + note
+    # If 90 days have already passed beyond the deadline and still no 2.01,
+    # we can be confident the deal didn't close on time. Mark as miss.
+    if (datetime.now(timezone.utc).date() - claim.deadline.date()).days > 90:
+        return Outcome.miss, None, "merger called, no 2.01 within 90d window: " + note
+    return Outcome.pending, None, "deadline passed but still in 90d watch window: " + note
+
+
+def _resolve_product_launch(claim: Claim) -> tuple[Outcome, float | None, str]:
+    """Stock-price reaction proxy: did the market react positively around the launch?
+
+    Crude but the best we can automate without a product-news subscription.
+    A real launch typically registers as positive return in the ±5 trading
+    days around the announced date.
+    """
+    if not claim.ticker or claim.deadline is None:
+        return Outcome.pending, None, "missing ticker/deadline"
+    deadline = claim.deadline.date()
+    pre = stock_close_any(claim.ticker, deadline - timedelta(days=10))
+    post = stock_close_any(claim.ticker, deadline + timedelta(days=5))
+    if pre is None or post is None:
+        return Outcome.pending, None, "price data unavailable"
+    ret = (post - pre) / pre * 100
+    note = f"±10d return = {ret:+.2f}% (pre={pre:.2f} post={post:.2f}). Proxy only."
+    # Calibrated very loosely — product launches generally aren't huge price events.
+    if ret >= 3:
+        return Outcome.hit, ret, note
+    if ret >= -3:
+        return Outcome.partial, ret, note
+    return Outcome.miss, ret, note
 
 
 def resolve_one(claim: Claim) -> tuple[Outcome, float | None, str]:

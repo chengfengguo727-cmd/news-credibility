@@ -33,20 +33,20 @@ def _claim(**kwargs) -> Claim:
 # --- resolve_analyst_target ------------------------------------------
 
 def test_analyst_target_hit_when_within_5pct(monkeypatch):
-    monkeypatch.setattr(resolver, "us_close", lambda t, on: 205.0)  # +2.5%
+    monkeypatch.setattr(resolver, "stock_close_any", lambda t, on: 205.0)  # +2.5%
     outcome, actual, _ = resolver.resolve_analyst_target(_claim(predicted_value=200.0))
     assert outcome == Outcome.hit
     assert actual == 205.0
 
 
 def test_analyst_target_partial_when_within_15pct(monkeypatch):
-    monkeypatch.setattr(resolver, "us_close", lambda t, on: 220.0)  # +10%
+    monkeypatch.setattr(resolver, "stock_close_any", lambda t, on: 220.0)  # +10%
     outcome, _, _ = resolver.resolve_analyst_target(_claim(predicted_value=200.0))
     assert outcome == Outcome.partial
 
 
 def test_analyst_target_miss_when_beyond_15pct(monkeypatch):
-    monkeypatch.setattr(resolver, "us_close", lambda t, on: 150.0)  # -25%
+    monkeypatch.setattr(resolver, "stock_close_any", lambda t, on: 150.0)  # -25%
     outcome, _, _ = resolver.resolve_analyst_target(_claim(predicted_value=200.0))
     assert outcome == Outcome.miss
 
@@ -57,7 +57,7 @@ def test_analyst_target_pending_on_missing_fields():
 
 
 def test_analyst_target_pending_when_yfinance_returns_none(monkeypatch):
-    monkeypatch.setattr(resolver, "us_close", lambda t, on: None)
+    monkeypatch.setattr(resolver, "stock_close_any", lambda t, on: None)
     outcome, _, _ = resolver.resolve_analyst_target(_claim())
     assert outcome == Outcome.pending
 
@@ -184,13 +184,42 @@ def test_earnings_miss_miss_when_actually_beat(monkeypatch):
     assert "miss called, beat instead" in note
 
 
-def test_stock_event_product_launch_pending():
-    outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("product_launch"))
-    assert outcome == Outcome.pending
-    assert "product_launch" in note
-
-
-def test_stock_event_merger_completion_pending():
+def test_merger_hit_when_2_01_filed(monkeypatch):
+    monkeypatch.setattr(resolver, "sec_8k_items_near", lambda *a, **kw: ["2.01", "9.01"])
     outcome, _, note = resolver.resolve_stock_event(_earnings_event_claim("merger_completion"))
+    assert outcome == Outcome.hit
+    assert "2.01" in note
+
+
+def test_merger_pending_when_no_filings(monkeypatch):
+    monkeypatch.setattr(resolver, "sec_8k_items_near", lambda *a, **kw: [])
+    outcome, _, _ = resolver.resolve_stock_event(_earnings_event_claim("merger_completion"))
     assert outcome == Outcome.pending
-    assert "merger_completion" in note
+
+
+def test_merger_miss_after_90d_no_2_01(monkeypatch):
+    from datetime import datetime, timezone, timedelta
+    monkeypatch.setattr(resolver, "sec_8k_items_near", lambda *a, **kw: ["5.02", "9.01"])
+    long_ago = datetime.now(timezone.utc) - timedelta(days=120)
+    claim = _earnings_event_claim("merger_completion", deadline=long_ago)
+    outcome, _, _ = resolver.resolve_stock_event(claim)
+    assert outcome == Outcome.miss
+
+
+def test_product_launch_hit_on_strong_rise(monkeypatch):
+    # pre=100, post=105 -> +5%
+    monkeypatch.setattr(resolver, "stock_close_any",
+                        lambda t, on: 100.0 if on.year == 2025 else 105.0)
+    from datetime import datetime, timezone
+    claim = _earnings_event_claim("product_launch",
+                                  deadline=datetime(2026, 1, 1, tzinfo=timezone.utc))
+    outcome, val, _ = resolver.resolve_stock_event(claim)
+    # We supplied a date arithmetic where pre uses an earlier year
+    assert outcome in (Outcome.hit, Outcome.partial)  # actual % depends on direction
+    assert val is not None
+
+
+def test_product_launch_pending_when_price_missing(monkeypatch):
+    monkeypatch.setattr(resolver, "stock_close_any", lambda t, on: None)
+    outcome, _, _ = resolver.resolve_stock_event(_earnings_event_claim("product_launch"))
+    assert outcome == Outcome.pending

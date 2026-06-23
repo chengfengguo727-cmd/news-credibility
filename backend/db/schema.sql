@@ -131,6 +131,25 @@ CREATE INDEX IF NOT EXISTS idx_scores_source ON source_scores (source);
 
 -- Views for the frontend dashboards ----------------------------------
 
+-- Pipeline status (single row) — drives the top status bar on the
+-- homepage. Cheap to compute (a handful of COUNTs / MAXes); refreshed
+-- whenever the page revalidates.
+CREATE OR REPLACE VIEW v_pipeline_status AS
+SELECT
+    (SELECT COUNT(*) FROM articles)                                  AS articles_total,
+    (SELECT COUNT(*) FROM article_meta)                              AS articles_with_meta,
+    (SELECT COUNT(*) FROM articles WHERE body IS NOT NULL)           AS articles_with_body,
+    (SELECT COUNT(*) FROM articles
+     WHERE body IS NOT NULL
+       AND id NOT IN (SELECT article_id FROM article_meta))          AS pending_with_body,
+    (SELECT MAX(fetched_at)   FROM articles)                         AS latest_ingest_at,
+    (SELECT MAX(extracted_at) FROM article_meta)                     AS latest_extract_at,
+    (SELECT MAX(published_at) FROM articles)                         AS latest_article_published_at,
+    (SELECT MAX(a.published_at)
+     FROM article_meta m JOIN articles a ON a.id = m.article_id)     AS latest_extracted_article_published_at
+;
+
+
 -- Top tickers by mentions in last 7 days, with sentiment breakdown
 CREATE OR REPLACE VIEW v_top_tickers_7d AS
 SELECT
@@ -221,7 +240,7 @@ GRANT SELECT ON articles, claims, claim_outcomes, source_scores TO anon, authent
 GRANT SELECT ON article_meta, article_tickers, article_sectors, article_narrative_tags
     TO anon, authenticated;
 GRANT SELECT ON v_ticker_mention_growth_24h, v_top_tickers_7d, v_top_sectors_7d,
-                 v_top_narratives_7d, v_source_stats
+                 v_top_narratives_7d, v_source_stats, v_pipeline_status
     TO anon, authenticated;
 
 -- Row-Level Security -------------------------------------------------

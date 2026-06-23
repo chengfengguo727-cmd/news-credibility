@@ -11,6 +11,26 @@ import { supabase } from "./supabase";
 export type Sentiment = "bullish" | "bearish" | "neutral" | "mixed";
 export type ClaimType = "analyst_target" | "macro" | "stock_event";
 
+export type PipelineStatus = {
+  articles_total: number;
+  articles_with_meta: number;
+  articles_with_body: number;
+  pending_with_body: number;
+  latest_ingest_at: string | null;
+  latest_extract_at: string | null;
+  latest_article_published_at: string | null;
+  latest_extracted_article_published_at: string | null;
+};
+
+export async function getPipelineStatus(): Promise<PipelineStatus | null> {
+  const { data, error } = await supabase
+    .from("v_pipeline_status")
+    .select("*")
+    .single();
+  if (error) return null;
+  return data as PipelineStatus;
+}
+
 export type SourceStats = {
   source: string;
   articles_total: number;

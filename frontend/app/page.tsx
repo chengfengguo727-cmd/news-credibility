@@ -1,6 +1,7 @@
 import {
   SOURCES,
   getMentionGrowth,
+  getPipelineStatus,
   getRecentArticles,
   getSourceStats,
   getTopNarratives,
@@ -12,6 +13,28 @@ export const revalidate = 60; // ISR: re-fetch at most once a minute
 
 function pct(n: number, total: number) {
   return total > 0 ? Math.round((100 * n) / total) : 0;
+}
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return "—";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 0) return "just now";
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function daysBetween(a: string | null, b: string | null): number | null {
+  if (!a || !b) return null;
+  return Math.max(
+    0,
+    Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86_400_000),
+  );
 }
 
 function SentimentBar({ bull, bear, neu, mixed }: { bull: number; bear: number; neu: number; mixed: number }) {
@@ -28,7 +51,8 @@ function SentimentBar({ bull, bear, neu, mixed }: { bull: number; bear: number; 
 }
 
 export default async function Page() {
-  const [tickers, growth, sectors, narratives, sources, recent] = await Promise.all([
+  const [status, tickers, growth, sectors, narratives, sources, recent] = await Promise.all([
+    getPipelineStatus().catch(() => null),
     getTopTickers(15).catch(() => []),
     getMentionGrowth(10).catch(() => []),
     getTopSectors(12).catch(() => []),
@@ -37,8 +61,84 @@ export default async function Page() {
     getRecentArticles({ limit: 10 }).catch(() => []),
   ]);
 
+  const extractPct = status
+    ? pct(status.articles_with_meta, status.articles_total)
+    : 0;
+  const lagDays = status
+    ? daysBetween(
+        status.latest_article_published_at,
+        status.latest_extracted_article_published_at,
+      )
+    : null;
+
   return (
     <main className="space-y-12">
+      {status && (
+        <section>
+          <header className="mb-3 flex items-baseline justify-between">
+            <h2 className="text-lg font-medium">📊 Pipeline status</h2>
+            <span className="text-xs text-neutral-500">
+              ingest = fetch RSS · extract = Claude meta tagging
+            </span>
+          </header>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-md border p-3">
+              <div className="text-xs uppercase tracking-wide text-neutral-500">
+                Ingested
+              </div>
+              <div className="mt-1 text-2xl font-semibold tabular-nums">
+                {status.articles_total.toLocaleString()}
+              </div>
+              <div className="mt-1 text-xs text-neutral-500">
+                latest {timeAgo(status.latest_ingest_at)}
+              </div>
+            </div>
+            <div className="rounded-md border p-3">
+              <div className="text-xs uppercase tracking-wide text-neutral-500">
+                Extracted (with meta)
+              </div>
+              <div className="mt-1 text-2xl font-semibold tabular-nums">
+                {status.articles_with_meta.toLocaleString()}
+                <span className="ml-1 text-sm font-normal text-neutral-500">
+                  ({extractPct}%)
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-neutral-500">
+                latest run {timeAgo(status.latest_extract_at)}
+              </div>
+            </div>
+            <div className="rounded-md border p-3">
+              <div className="text-xs uppercase tracking-wide text-neutral-500">
+                Pending
+              </div>
+              <div className="mt-1 text-2xl font-semibold tabular-nums">
+                {status.pending_with_body.toLocaleString()}
+              </div>
+              <div className="mt-1 text-xs text-neutral-500">
+                with body, no meta
+              </div>
+            </div>
+            <div className="rounded-md border p-3">
+              <div className="text-xs uppercase tracking-wide text-neutral-500">
+                Extraction lag
+              </div>
+              <div
+                className={`mt-1 text-2xl font-semibold tabular-nums ${
+                  lagDays != null && lagDays >= 7
+                    ? "text-amber-600"
+                    : "text-emerald-600"
+                }`}
+              >
+                {lagDays != null ? `${lagDays}d` : "—"}
+              </div>
+              <div className="mt-1 text-xs text-neutral-500">
+                newest article vs newest meta
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section>
         <header className="mb-3 flex items-baseline justify-between">
           <h2 className="text-lg font-medium">🔥 Trending tickers (14d)</h2>

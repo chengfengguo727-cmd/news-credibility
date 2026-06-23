@@ -143,7 +143,7 @@ SELECT
     COUNT(*) FILTER (WHERE t.is_primary)         AS primary_count
 FROM article_tickers t
 JOIN articles a ON a.id = t.article_id
-WHERE a.published_at > now() - interval '7 days'
+WHERE a.published_at > now() - interval '14 days'
   AND t.ticker NOT LIKE '^%'   -- skip indices
 GROUP BY t.ticker
 ORDER BY mentions DESC, primary_count DESC;
@@ -153,7 +153,7 @@ CREATE OR REPLACE VIEW v_top_sectors_7d AS
 SELECT s.sector, COUNT(*) AS mentions
 FROM article_sectors s
 JOIN articles a ON a.id = s.article_id
-WHERE a.published_at > now() - interval '7 days'
+WHERE a.published_at > now() - interval '14 days'
 GROUP BY s.sector
 ORDER BY mentions DESC;
 
@@ -162,7 +162,7 @@ CREATE OR REPLACE VIEW v_top_narratives_7d AS
 SELECT n.tag, COUNT(*) AS mentions
 FROM article_narrative_tags n
 JOIN articles a ON a.id = n.article_id
-WHERE a.published_at > now() - interval '7 days'
+WHERE a.published_at > now() - interval '14 days'
 GROUP BY n.tag
 ORDER BY mentions DESC;
 

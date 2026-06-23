@@ -41,7 +41,7 @@ export default async function Page() {
     <main className="space-y-12">
       <section>
         <header className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-lg font-medium">🔥 Trending tickers (7d)</h2>
+          <h2 className="text-lg font-medium">🔥 Trending tickers (14d)</h2>
           <span className="text-xs text-neutral-500">color: bullish · neutral · mixed · bearish</span>
         </header>
         {tickers.length === 0 ? (
@@ -124,7 +124,7 @@ export default async function Page() {
 
       <div className="grid gap-8 md:grid-cols-2">
         <section>
-          <h2 className="mb-3 text-lg font-medium">🏷️ Trending narratives (7d)</h2>
+          <h2 className="mb-3 text-lg font-medium">🏷️ Trending narratives (14d)</h2>
           <ul className="space-y-1 text-sm">
             {narratives.map((n) => (
               <li key={n.tag} className="flex justify-between border-t py-1.5">
@@ -139,7 +139,7 @@ export default async function Page() {
         </section>
 
         <section>
-          <h2 className="mb-3 text-lg font-medium">🏢 Hot sectors (7d)</h2>
+          <h2 className="mb-3 text-lg font-medium">🏢 Hot sectors (14d)</h2>
           <ul className="space-y-1 text-sm">
             {sectors.map((s) => (
               <li key={s.sector} className="flex justify-between border-t py-1.5">
